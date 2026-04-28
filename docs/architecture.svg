@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="Microsoft YaHei, Arial, sans-serif">
+  <defs>
+    <linearGradient id="box1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="box2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#43e97b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#38f9d7;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="box3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fa709a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fee140;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="box4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a18cd1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fbc2eb;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="mysql" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00758F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F29111;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="115%" height="115%">
+      <feDropShadow dx="2" dy="3" stdDeviation="3" flood-opacity="0.2"/>
+    </filter>
+    <marker id="arrowRight" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+    <marker id="arrowLeft" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+      <polygon points="10 0, 0 3.5, 10 7" fill="#666"/>
+    </marker>
+    <marker id="arrowDown" markerWidth="7" markerHeight="10" refX="3.5" refY="10" orient="auto">
+      <polygon points="0 0, 3.5 10, 7 0" fill="#666"/>
+    </marker>
+    <marker id="arrowUp" markerWidth="7" markerHeight="10" refX="3.5" refY="0" orient="auto">
+      <polygon points="0 10, 3.5 0, 7 10" fill="#666"/>
+    </marker>
+  </defs>
+
+  <!-- 标题 -->
+  <text x="450" y="35" text-anchor="middle" font-size="20" font-weight="bold" fill="#333">AI-TrashWatch 系统架构图</text>
+
+  <!-- === 浏览器 === -->
+  <rect x="60" y="60" width="160" height="90" rx="12" fill="url(#box1)" filter="url(#shadow)"/>
+  <text x="140" y="100" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">🌐 浏览器</text>
+  <text x="140" y="120" text-anchor="middle" fill="#eef" font-size="11">JSP / JavaScript</text>
+  <text x="140" y="136" text-anchor="middle" fill="#eef" font-size="11">ECharts 图表</text>
+
+  <!-- HTTP 请求 / 响应 箭头 -->
+  <line x1="220" y1="85" x2="310" y2="85" stroke="#666" stroke-width="2" marker-end="url(#arrowRight)"/>
+  <line x1="310" y1="115" x2="220" y2="115" stroke="#666" stroke-width="2" marker-end="url(#arrowLeft)"/>
+  <text x="258" y="78" text-anchor="middle" fill="#999" font-size="10">HTTP 请求</text>
+  <text x="258" y="126" text-anchor="middle" fill="#999" font-size="10">JSP 响应</text>
+
+  <!-- === Tomcat 主体 === -->
+  <rect x="320" y="50" width="260" height="220" rx="14" fill="none" stroke="#667eea" stroke-width="2" stroke-dasharray="6,3"/>
+  <text x="450" y="72" text-anchor="middle" fill="#667eea" font-size="13" font-weight="bold">Apache Tomcat（主体应用）</text>
+
+  <!-- Servlet -->
+  <rect x="340" y="85" width="100" height="40" rx="8" fill="url(#box2)" filter="url(#shadow)"/>
+  <text x="390" y="110" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Servlet 控制层</text>
+
+  <!-- Service -->
+  <rect x="340" y="140" width="100" height="40" rx="8" fill="url(#box3)" filter="url(#shadow)"/>
+  <text x="390" y="165" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Service 业务层</text>
+
+  <!-- DAO -->
+  <rect x="340" y="195" width="100" height="40" rx="8" fill="url(#box4)" filter="url(#shadow)"/>
+  <text x="390" y="220" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">DAO 数据访问</text>
+
+  <!-- 层间箭头 -->
+  <line x1="390" y1="125" x2="390" y2="140" stroke="#666" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+  <line x1="390" y1="180" x2="390" y2="195" stroke="#666" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+
+  <!-- 过滤层 -->
+  <rect x="460" y="85" width="100" height="40" rx="8" fill="#f093fb" filter="url(#shadow)"/>
+  <text x="510" y="110" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Filter 安全层</text>
+
+  <rect x="460" y="140" width="100" height="40" rx="8" fill="#4facfe" filter="url(#shadow)"/>
+  <text x="510" y="165" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">文件上传/图片</text>
+
+  <!-- === MySQL === -->
+  <rect x="320" y="270" width="120" height="50" rx="25" fill="url(#mysql)" filter="url(#shadow)"/>
+  <text x="380" y="300" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">🗄️ MySQL</text>
+
+  <line x1="380" y1="235" x2="380" y2="270" stroke="#666" stroke-width="2" marker-end="url(#arrowDown)"/>
+  <text x="366" y="258" text-anchor="middle" fill="#999" font-size="10">JDBC 查询</text>
+
+  <!-- === DJL 推理微服务 === -->
+  <rect x="620" y="140" width="200" height="110" rx="14" fill="none" stroke="#fa709a" stroke-width="2" stroke-dasharray="6,3"/>
+  <text x="720" y="162" text-anchor="middle" fill="#fa709a" font-size="13" font-weight="bold">DJL 推理微服务</text>
+  <text x="720" y="178" text-anchor="middle" fill="#999" font-size="10">Spring Boot</text>
+
+  <rect x="640" y="190" width="160" height="40" rx="8" fill="#fa709a" filter="url(#shadow)"/>
+  <text x="720" y="215" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">YOLOv8 自定义模型</text>
+
+  <!-- Tomcat → DJL 箭头 -->
+  <line x1="580" y1="160" x2="620" y2="170" stroke="#666" stroke-width="2" marker-end="url(#arrowRight)"/>
+  <line x1="620" y1="200" x2="580" y2="190" stroke="#666" stroke-width="2" marker-end="url(#arrowLeft)"/>
+  <text x="600" y="155" text-anchor="middle" fill="#999" font-size="9">上传图片</text>
+  <text x="600" y="215" text-anchor="middle" fill="#999" font-size="9">返回检测结果</text>
+
+  <!-- === 底部说明 === -->
+  <text x="140" y="310" text-anchor="middle" fill="#999" font-size="10" font-style="italic">表现层</text>
+  <text x="390" y="350" text-anchor="middle" fill="#999" font-size="10" font-style="italic">业务逻辑层</text>
+  <text x="720" y="320" text-anchor="middle" fill="#999" font-size="10" font-style="italic">AI 推理层</text>
+</svg>
