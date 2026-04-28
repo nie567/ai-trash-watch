@@ -111,8 +111,8 @@ src/main/webapp/
 
 | 表名 | 说明 |
 |------|------|
-| `user` | 用户表（复用已有） |
-| `operation_log` | 操作日志表（复用已有） |
+| `user` | 用户表 |
+| `operation_log` | 操作日志表 |
 | `garbage_rule` | 分类规则表（className → mappedCategory） |
 | `garbage_record` | 投放记录表 |
 | `detection_result` | 检测明细表 |
