@@ -1,74 +1,74 @@
 # AI-TrashWatch
 
-> 基于 Java Web (Servlet + JSP + JDBC) 的垃圾分类 AI 识别与投放监管平台
+> A garbage classification AI recognition and disposal supervision platform based on Java Web (Servlet + JSP + JDBC)
 
-AI-TrashWatch 通过集成 DJL 深度学习推理微服务，加载**自定义 YOLOv8 垃圾分类模型**，实现对 6 类生活垃圾的智能识别，并结合投放记录管理、违规自动判定、整改闭环处理及统计分析，构建从识别到监管的完整流程。
+AI-TrashWatch integrates DJL deep learning inference microservice with a **custom YOLOv8 garbage classification model** to intelligently recognize 6 categories of household waste. It combines disposal record management, automated violation detection, rectification closed-loop processing, and statistical analysis to build a complete pipeline from recognition to supervision.
 
-## ✨ 核心特性
+## ✨ Core Features
 
-- **🤖 AI 智能识别** — 集成 DJL + YOLOv8 自定义模型，支持 6 类垃圾检测
-- **🚮 投放记录管理** — 完整记录每次投放，含原始图片与检测结果图对比
-- **⚖️ 违规自动判定** — 用户选择与 AI 推荐不一致时自动生成违规记录，支持分级判定
-- **🔄 整改闭环处理** — 发起整改 → 用户提交 → 管理员复核，全流程追溯
-- **📊 统计分析** — ECharts 可视化：类别分布、正确率、7 天趋势、违规排名
-- **🔧 分类规则管理** — 检测类别到业务类别的映射规则，可灵活配置
-- **📚 分类知识库** — 按类别展示垃圾分类知识，支持 CRUD 管理
+- **🤖 AI Recognition** — DJL + YOLOv8 custom model, 6-class waste detection
+- **🚮 Disposal Records** — Full record of each disposal with original & detection images
+- **⚖️ Auto Violation Detection** — Automatically generates violation when user selection differs from AI recommendation, with tiered determination
+- **🔄 Rectification Workflow** — Initiate → User submits → Admin reviews, full traceability
+- **📊 Statistics & Analytics** — ECharts visualizations: category distribution, accuracy, 7-day trends, violation rankings
+- **🔧 Classification Rules** — Flexible mapping from detection classes to business categories
+- **📚 Knowledge Base** — Category-based waste knowledge with CRUD management
 
-## 🎯 AI 模型识别能力
+## 🎯 AI Model Capabilities
 
-系统搭载**自定义训练的 YOLOv8s 垃圾分类模型**，可识别 6 类常见生活垃圾：
+The system runs a **custom-trained YOLOv8s waste classification model** that recognizes 6 common household waste types:
 
-| 类别 | 英文标识 | 示例物品 |
-|------|----------|----------|
-| 🟤 可生物降解 | BIODEGRADABLE | 厨余、果皮、树叶 |
-| 📦 纸板 | CARDBOARD | 快递纸箱、纸盒 |
-| 🟢 玻璃 | GLASS | 玻璃瓶、碎玻璃 |
-| 🔩 金属 | METAL | 易拉罐、金属瓶盖 |
-| 📄 纸张 | PAPER | 报纸、打印纸、书籍 |
-| 🧴 塑料 | PLASTIC | 塑料瓶、塑料袋 |
+| Category | Label | Examples |
+|----------|-------|----------|
+| 🟤 Biodegradable | BIODEGRADABLE | Kitchen waste, fruit peels, leaves |
+| 📦 Cardboard | CARDBOARD | Shipping boxes, cartons |
+| 🟢 Glass | GLASS | Glass bottles, broken glass |
+| 🔩 Metal | METAL | Cans, metal lids |
+| 📄 Paper | PAPER | Newspapers, printer paper, books |
+| 🧴 Plastic | PLASTIC | Plastic bottles, plastic bags |
 
-> 模型置信度阈值可配置（默认 0.5），识别结果支持人工复核修正。
+> The confidence threshold is configurable (default 0.5). Detection results can be manually reviewed and corrected.
 
-## 🏗️ 系统架构
+## 🏗️ System Architecture
 
-![系统架构图](docs/architecture.svg)
+![System Architecture Diagram](docs/architecture.svg)
 
-### 分层架构
+### Layered Architecture
 
-| 层次 | 技术选型 | 说明 |
-|------|---------|------|
-| 表现层 | JSP + JSTL + CSS + JS | 服务端渲染，ECharts 统计图表 |
-| 控制层 | Jakarta Servlet | 请求路由、参数校验、文件上传 |
-| 业务层 | Java Service | 规则映射、违规判定、整改流程、级联处理 |
-| 数据访问层 | JDBC + HikariCP | 原生 SQL，连接池管理 |
-| 安全层 | Filter | 认证/授权/XSS 防护/编码过滤 |
-| 推理服务 | DJL + YOLOv8 (Spring Boot) | 目标检测推理，HTTP REST 通信 |
+| Layer | Technology | Description |
+|-------|-----------|-------------|
+| Presentation | JSP + JSTL + CSS + JS | Server-side rendering, ECharts charts |
+| Controller | Jakarta Servlet | Request routing, validation, file upload |
+| Business | Java Service | Rule mapping, violation logic, rectification workflow, cascade handling |
+| Data Access | JDBC + HikariCP | Native SQL, connection pooling |
+| Security | Filter | Authentication / Authorization / XSS / Encoding |
+| Inference | DJL + YOLOv8 (Spring Boot) | Object detection, HTTP REST communication |
 
-### 核心业务流程
+### Core Business Flow
 
-![核心业务流程图](docs/flowchart.svg)
+![Core Business Flow Diagram](docs/flowchart.svg)
 
-## 🛠️ 技术栈
+## 🛠️ Technology Stack
 
-| 类别 | 技术 |
-|------|------|
-| 语言 | Java 21 |
+| Category | Technology |
+|----------|-----------|
+| Language | Java 21 |
 | Web | Jakarta Servlet 6.0 + JSP 3.1 + JSTL 2.0 |
-| 数据库 | MySQL 8.0 |
-| 连接池 | HikariCP 4.0 |
-| 密码加密 | jBCrypt 0.4 |
+| Database | MySQL 8.0 |
+| Connection Pool | HikariCP 4.0 |
+| Password Hashing | jBCrypt 0.4 |
 | JSON | Jackson 2.16 |
-| 日志 | SLF4J + Logback |
-| AI 推理 | DJL (Deep Java Library) + YOLOv8 自定义模型 |
-| 图表 | ECharts 5 |
-| 构建 | Maven |
-| 容器 | Tomcat 9.0 / 10.0 |
+| Logging | SLF4J + Logback |
+| AI Inference | DJL (Deep Java Library) + Custom YOLOv8 Model |
+| Charts | ECharts 5 |
+| Build | Maven |
+| Container | Tomcat 9.0 / 10.0 |
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 src/main/java/com/example/
-├── controller/          # Servlet 控制层
+├── controller/          # Servlet controllers
 │   ├── AdminDashboardServlet.java
 │   ├── AdminGarbageRecordServlet.java
 │   ├── AdminRectificationServlet.java
@@ -82,10 +82,10 @@ src/main/java/com/example/
 │   ├── RuleServlet.java
 │   ├── StatisticsServlet.java
 │   └── ViolationServlet.java
-├── dao/                 # 数据访问层
-├── filter/              # 过滤器（认证/授权/XSS/编码）
-├── model/               # 实体/VO/DTO
-├── service/             # 业务层
+├── dao/                 # Data access layer
+├── filter/              # Filters (auth, XSS, encoding)
+├── model/               # Entities / VO / DTO
+├── service/             # Business layer
 │   ├── DjlInferenceClient.java
 │   ├── GarbageRecordService.java
 │   ├── KnowledgeService.java
@@ -94,60 +94,60 @@ src/main/java/com/example/
 │   ├── StatisticsService.java
 │   ├── ViolationService.java
 │   └── UserService.java
-└── util/                # 工具类
+└── util/                # Utilities
 
 src/main/webapp/
-├── css/style.css        # 全局样式
+├── css/style.css        # Global styles
 └── WEB-INF/jsp/
-    ├── nav-user.jsp      # 用户导航栏
-    ├── nav-admin.jsp     # 管理员导航栏
-    ├── user/             # 用户端页面
-    └── admin/            # 管理员端页面
+    ├── nav-user.jsp      # User navigation
+    ├── nav-admin.jsp     # Admin navigation
+    ├── user/             # User-facing pages
+    └── admin/            # Admin-facing pages
 ```
 
-## 🗄️ 数据库设计
+## 🗄️ Database Design
 
-共 8 张表，运行于 MySQL `user_management` 数据库中：
+8 tables running in the `user_management` MySQL database:
 
-| 表名 | 说明 |
-|------|------|
-| `user` | 用户表 |
-| `operation_log` | 操作日志表 |
-| `garbage_rule` | 分类规则表（className → mappedCategory） |
-| `garbage_record` | 投放记录表 |
-| `detection_result` | 检测明细表 |
-| `violation_record` | 违规记录表 |
-| `rectification_task` | 整改任务表 |
-| `knowledge_base` | 知识库表 |
+| Table | Description |
+|-------|-------------|
+| `user` | Users |
+| `operation_log` | Operation logs |
+| `garbage_rule` | Classification rules (className → mappedCategory) |
+| `garbage_record` | Disposal records |
+| `detection_result` | Detection details |
+| `violation_record` | Violation records |
+| `rectification_task` | Rectification tasks |
+| `knowledge_base` | Knowledge base entries |
 
-初始化脚本：`src/main/resources/init-garbage-tables.sql`
+Init script: `src/main/resources/init-garbage-tables.sql`
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 前置条件
+### Prerequisites
 
 - JDK 21+
 - Maven 3.8+
 - MySQL 8.0+
-- Tomcat 9.0+（主体应用）或 Tomcat 10.0+（微服务）
-- DJL 目标检测微服务（[djl-spring-boot-starter-demo](https://github.com/deepjavalibrary/djl-demo)）
+- Tomcat 9.0+ (main app) or Tomcat 10.0+ (microservice)
+- DJL Detection Microservice ([djl-spring-boot-starter-demo](https://github.com/deepjavalibrary/djl-demo))
 
-### 1. 初始化数据库
+### 1. Initialize Database
 
 ```sql
 CREATE DATABASE IF NOT EXISTS user_management DEFAULT CHARSET utf8mb4;
 USE user_management;
 
--- 执行已有 schema
+-- Apply existing schema
 source src/main/resources/schema.sql;
 
--- 执行垃圾分类扩展表
+-- Apply garbage extension tables
 source src/main/resources/init-garbage-tables.sql;
 ```
 
-### 2. 配置数据库连接
+### 2. Configure Database Connection
 
-编辑 `src/main/resources/db.properties`：
+Edit `src/main/resources/db.properties`:
 
 ```properties
 db.url=jdbc:mysql://localhost:3306/user_management?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8mb4
@@ -155,60 +155,60 @@ db.username=root
 db.password=your_password
 ```
 
-### 3. 配置应用常量
+### 3. Configure App Constants
 
-编辑 `src/main/java/com/example/util/AppConstants.java`：
+Edit `src/main/java/com/example/util/AppConstants.java`:
 
 ```java
-// DJL 微服务地址
+// DJL microservice URL
 public static final String DJL_INFERENCE_URL = "http://localhost:8080";
 
-// 图片目录
+// Image directories
 public static final String DJL_INPUT_DIR = "/path/to/data_set/input";
 public static final String DJL_OUTPUT_DIR = "/path/to/data_set/output";
 ```
 
-### 4. 启动 DJL 推理微服务
+### 4. Start DJL Inference Microservice
 
 ```bash
 cd djl-spring-boot-starter-demo
 mvn spring-boot:run
-# 微服务默认运行在 http://localhost:8080
+# Microservice runs at http://localhost:8080 by default
 ```
 
-### 5. 构建并部署
+### 5. Build & Deploy
 
 ```bash
-# 构建 WAR
+# Build WAR
 mvn clean package -DskipTests
 
-# 部署到 Tomcat
+# Deploy to Tomcat
 cp target/user-management.war /path/to/tomcat/webapps/
 ```
 
-### 6. 访问系统
+### 6. Access the System
 
-- 应用地址：`http://localhost:8081/user_management_war_exploded/`
-- 默认管理员账号：见 `schema.sql` 初始化数据
+- App URL: `http://localhost:8081/user_management_war_exploded/`
+- Default admin credentials: see initialization data in `schema.sql`
 
-## 🔍 关键业务逻辑
+## 🔍 Key Business Logic
 
-### 人工复核判定
+### Manual Review & Determination
 
-管理员指定 `finalCategory`（正确类别），与用户的 `selectedCategory` 对比：
-- **一致** → 用户正确 → 违规记录标记为 `IGNORED`（误判）
-- **不一致** → 用户错误 → 违规记录保持/恢复为 `PENDING`
+An admin sets the `finalCategory` (correct category), which is compared against the user's `selectedCategory`:
+- **Match** → User was correct → Violation marked as `IGNORED` (false positive)
+- **Mismatch** → User was wrong → Violation stays/reverts to `PENDING`
 
-### 违规自动生成
+### Automatic Violation Generation
 
-投放记录保存时，若用户选择类别与 AI 推荐类别不同，自动生成违规记录：
-- 违规类型：`分类错误` 或 `混投`
-- 违规级别：`LOW`（首次）/ `MEDIUM`（混投）/ `HIGH`（累计 ≥ 3 次）
+When a disposal record is saved, if the user's chosen category differs from the AI recommendation, a violation is auto-generated:
+- Violation type: `WRONG_CATEGORY` or `MIXED_DISPOSAL`
+- Violation level: `LOW` (first offense) / `MEDIUM` (mixed) / `HIGH` (cumulative ≥ 3)
 
-### 级联删除
+### Cascade Deletion
 
-删除投放记录时，按顺序级联删除：整改任务 → 违规记录 → 检测明细 → 投放记录
+Deleting a disposal record cascades: rectification tasks → violation records → detection details → disposal record
 
 ## 📄 License
 
-本项目基于 MIT License 开源。
+This project is open-sourced under the MIT License.
