@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - 用户管理系统</title>
+    <title>登录 - 垃圾分类监管系统</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -108,7 +108,7 @@
 <body>
     <div class="login-container">
         <div class="login-header">
-            <h1>用户管理系统</h1>
+            <h1>垃圾分类监管系统</h1>
             <p>请登录您的账号</p>
         </div>
         

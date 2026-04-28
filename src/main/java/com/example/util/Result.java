@@ -7,49 +7,74 @@ public class Result<T> {
     private int code;
     private String message;
     private T data;
-    
+
     public static final int SUCCESS = 200;
     public static final int ERROR = 500;
     public static final int UNAUTHORIZED = 401;
     public static final int FORBIDDEN = 403;
-    
+
     private Result() {}
-    
+
     public static <T> Result<T> success() {
         return success(null);
     }
-    
+
     public static <T> Result<T> success(T data) {
         Result<T> result = new Result<>();
         result.code = SUCCESS;
         result.data = data;
         return result;
     }
-    
+
     public static <T> Result<T> error(String message) {
         Result<T> result = new Result<>();
         result.code = ERROR;
         result.message = message;
         return result;
     }
-    
+
     public static <T> Result<T> error(int code, String message) {
         Result<T> result = new Result<>();
         result.code = code;
         result.message = message;
         return result;
     }
-    
+
     public static <T> Result<T> unauthorized(String message) {
         return error(UNAUTHORIZED, message);
     }
-    
+
     public static <T> Result<T> forbidden(String message) {
         return error(FORBIDDEN, message);
     }
-    
+
     // Getters
     public int getCode() { return code; }
     public String getMessage() { return message; }
     public T getData() { return data; }
+
+    /**
+     * 将 Result 对象转换为 JSON 字符串
+     */
+    public String toJson() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"code\":").append(code);
+        sb.append(",\"message\":\"").append(message != null ? escapeJson(message) : "").append("\"");
+        sb.append(",\"data\":");
+        if (data != null) {
+            sb.append(data.toString());
+        } else {
+            sb.append("null");
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private static String escapeJson(String s) {
+        return s.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
+    }
 }

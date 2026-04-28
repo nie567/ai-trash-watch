@@ -1,7 +1,7 @@
 package com.example.util;
 
-import javax.servlet.*;
-import javax.servlet.annotation.WebFilter;
+import jakarta.servlet.*;
+import jakarta.servlet.annotation.WebFilter;
 import java.io.IOException;
 
 /**
@@ -25,9 +25,8 @@ public class CharacterEncodingFilter implements Filter {
             throws IOException, ServletException {
         // 设置请求编码
         request.setCharacterEncoding(encoding);
-        // 设置响应编码
+        // 设置响应编码，但不覆盖已有的 Content-Type
         response.setCharacterEncoding(encoding);
-        response.setContentType("text/html;charset=" + encoding);
         
         chain.doFilter(request, response);
     }

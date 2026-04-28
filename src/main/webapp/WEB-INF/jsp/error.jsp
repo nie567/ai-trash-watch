@@ -19,7 +19,7 @@
                     exception.printStackTrace(new java.io.PrintWriter(out));
                 }
             %>
-            <a href="${pageContext.request.contextPath}/user/list" class="btn btn-primary">返回首页</a>
+            <a href="${pageContext.request.contextPath}/" class="btn btn-primary">返回首页</a>
         </div>
     </div>
 </body>

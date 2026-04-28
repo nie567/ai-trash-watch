@@ -7,9 +7,9 @@ import com.example.model.User;
 import com.example.util.AppConstants;
 import com.example.util.BCryptUtil;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -85,12 +85,23 @@ public class AdminUserServlet extends HttpServlet {
             throws ServletException, IOException {
         int page = getIntParameter(req, "page", 1);
         int pageSize = getIntParameter(req, "pageSize", DEFAULT_PAGE_SIZE);
+        String keyword = req.getParameter("keyword");
         
-        List<User> users = userDAO.findAll(page, pageSize);
-        int totalCount = userDAO.countAll();
+        List<User> users;
+        int totalCount;
+        
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            users = userDAO.search(keyword.trim(), page, pageSize);
+            totalCount = userDAO.countSearch(keyword.trim());
+        } else {
+            users = userDAO.findAll(page, pageSize);
+            totalCount = userDAO.countAll();
+        }
+        
         int totalPages = (int) Math.ceil((double) totalCount / pageSize);
         
         req.setAttribute("users", users);
+        req.setAttribute("keyword", keyword);
         req.setAttribute("currentPage", page);
         req.setAttribute("totalPages", totalPages);
         req.setAttribute("totalCount", totalCount);

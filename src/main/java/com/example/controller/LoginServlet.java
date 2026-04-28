@@ -7,9 +7,9 @@ import com.example.model.User;
 import com.example.util.AppConstants;
 import com.example.util.BCryptUtil;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.*;
 import java.io.IOException;
 
 /**
@@ -66,6 +66,16 @@ public class LoginServlet extends HttpServlet {
             req.setAttribute("error", "账号已被禁用，请联系管理员");
             req.getRequestDispatcher("/WEB-INF/jsp/login.jsp").forward(req, resp);
             return;
+        }
+        
+        // 检查当前 session 是否已有其他用户登录
+        // 防止同一浏览器多标签页间 session 互相覆盖导致角色混淆
+        HttpSession existingSession = req.getSession(false);
+        if (existingSession != null) {
+            User existingUser = (User) existingSession.getAttribute(AppConstants.SESSION_USER);
+            if (existingUser != null && !existingUser.getId().equals(user.getId())) {
+                existingSession.invalidate();
+            }
         }
         
         // 登录成功：创建 Session
