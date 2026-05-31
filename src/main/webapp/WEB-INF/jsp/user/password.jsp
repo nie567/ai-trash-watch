@@ -5,8 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>修改密码 - 用户管理系统</title>
-    
+    <title>修改密码 - 垃圾分类监管系统</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body>
@@ -14,17 +13,18 @@
     
     <div class="main-content">
         <div class="card">
-            <h2>修改密码</h2>
+            <h2 class="card-title">修改密码</h2>
             
             <c:if test="${param.success == 'changed'}">
-                <div class="alert">密码修改成功</div>
+                <div class="alert alert-success">密码修改成功</div>
             </c:if>
             
             <c:if test="${not empty error}">
-                <div class="error-message">${error}</div>
+                <div class="alert alert-error">${error}</div>
             </c:if>
             
-            <form method="post" action="${pageContext.request.contextPath}/user/password">
+            <form id="passwordForm" method="post" action="${pageContext.request.contextPath}/user/password">
+                <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
                 <div class="form-group">
                     <label for="oldPassword">旧密码 <span class="required">*</span></label>
                     <input type="password" id="oldPassword" name="oldPassword" 
@@ -35,7 +35,6 @@
                     <label for="newPassword">新密码 <span class="required">*</span></label>
                     <input type="password" id="newPassword" name="newPassword" 
                            placeholder="请输入新密码" required>
-                    <div class="hint">至少6个字符</div>
                 </div>
                 
                 <div class="form-group">
@@ -44,12 +43,36 @@
                            placeholder="请再次输入新密码" required>
                 </div>
                 
-                <div class="btn-group">
+                <div class="form-actions">
                     <a href="${pageContext.request.contextPath}/user/profile" class="btn btn-secondary">取消</a>
                     <button type="submit" class="btn btn-primary">保存</button>
                 </div>
             </form>
         </div>
     </div>
+
+<script>
+window._pageConfig = {
+    contextPath: '${pageContext.request.contextPath}',
+    csrfToken: '${sessionScope._csrfToken}'
+};
+</script>
+<script src="${pageContext.request.contextPath}/js/common.js"></script>
+<script>
+(function() {
+    'use strict';
+    var form = document.getElementById('passwordForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var newPwd = document.getElementById('newPassword').value;
+        var confirmPwd = document.getElementById('confirmPassword').value;
+        if (newPwd !== confirmPwd) {
+            showToast('两次输入的密码不一致', 'warning');
+            return;
+        }
+        ajaxSubmit(form, { successMsg: '密码修改成功' });
+    });
+})();
+</script>
 </body>
 </html>

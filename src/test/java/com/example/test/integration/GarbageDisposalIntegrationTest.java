@@ -37,7 +37,7 @@ public class GarbageDisposalIntegrationTest extends BaseTest {
         
         // 初始化用户
         executeSQL("INSERT IGNORE INTO user (id, username, password_hash, role, status) VALUES " +
-                "(1, 'testuser', 'hash', 'user', 1)");
+                "(9001, 'testuser', 'hash', 'user', 1)");
         
         // 初始化分类规则
         executeSQL("INSERT INTO garbage_rule (class_name, mapped_category, description, status) VALUES " +
@@ -61,7 +61,7 @@ public class GarbageDisposalIntegrationTest extends BaseTest {
         
         // 3. 创建投放记录
         GarbageRecord record = new GarbageRecord();
-        record.setUserId(1L);
+        record.setUserId(9001L);
         record.setImageName("metal.jpg");
         record.setImagePath("/input/metal.jpg");
         record.setDetectedSummary(detectedClass);
@@ -81,7 +81,7 @@ public class GarbageDisposalIntegrationTest extends BaseTest {
         assertEquals("投放应判定为正确", Integer.valueOf(1), savedRecord.getIsCorrect());
         
         // 5. 验证没有生成违规记录
-        List<ViolationRecord> violations = violationDAO.findByUserId(1L, 0, 10);
+        List<ViolationRecord> violations = violationDAO.findByUserId(9001L, 0, 10);
         assertEquals("正确投放不应生成违规记录", 0, violations.size());
     }
 
@@ -100,7 +100,7 @@ public class GarbageDisposalIntegrationTest extends BaseTest {
         
         // 3. 创建投放记录
         GarbageRecord record = new GarbageRecord();
-        record.setUserId(1L);
+        record.setUserId(9001L);
         record.setImageName("bio.jpg");
         record.setImagePath("/input/bio.jpg");
         record.setDetectedSummary(detectedClass);
@@ -122,7 +122,7 @@ public class GarbageDisposalIntegrationTest extends BaseTest {
         // 5. 自动生成违规记录
         ViolationRecord violation = new ViolationRecord();
         violation.setRecordId(recordId);
-        violation.setUserId(1L);
+        violation.setUserId(9001L);
         violation.setViolationType("错误投放");
         violation.setDescription("推荐类别: " + recommendedCategory + ", 实际投放: " + selectedCategory);
         violation.setLevel("MEDIUM");
@@ -132,7 +132,7 @@ public class GarbageDisposalIntegrationTest extends BaseTest {
         assertNotNull("违规记录应创建成功", violationId);
         
         // 6. 验证违规记录
-        List<ViolationRecord> violations = violationDAO.findByUserId(1L, 0, 10);
+        List<ViolationRecord> violations = violationDAO.findByUserId(9001L, 0, 10);
         assertEquals("应有1条违规记录", 1, violations.size());
         
         ViolationRecord savedViolation = violations.get(0);
@@ -172,7 +172,7 @@ public class GarbageDisposalIntegrationTest extends BaseTest {
         
         // 3. 创建投放记录
         GarbageRecord record = new GarbageRecord();
-        record.setUserId(1L);
+        record.setUserId(9001L);
         record.setImageName("mixed.jpg");
         record.setImagePath("/input/mixed.jpg");
         record.setDetectedSummary(String.join(", ", detectedClasses));
@@ -199,7 +199,7 @@ public class GarbageDisposalIntegrationTest extends BaseTest {
     public void testRuleChangeImpact() {
         // 1. 创建投放记录（METAL -> 可回收物）
         GarbageRecord record = new GarbageRecord();
-        record.setUserId(1L);
+        record.setUserId(9001L);
         record.setImageName("metal.jpg");
         record.setImagePath("/input/metal.jpg");
         record.setDetectedSummary("METAL");

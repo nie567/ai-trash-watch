@@ -79,62 +79,12 @@
     </div>
 
 <script>
-var contextPath = '${pageContext.request.contextPath}';
-
-function showRuleModal() {
-    document.getElementById('ruleModalTitle').textContent = '新增规则';
-    document.getElementById('ruleId').value = '';
-    document.getElementById('ruleClassName').value = '';
-    document.getElementById('ruleMappedCategory').value = '可回收物';
-    document.getElementById('ruleDescription').value = '';
-    document.getElementById('ruleModal').classList.add('show');
-}
-
-function editRule(id, className, mappedCategory, description, status) {
-    document.getElementById('ruleModalTitle').textContent = '编辑规则';
-    document.getElementById('ruleId').value = id;
-    document.getElementById('ruleClassName').value = className;
-    document.getElementById('ruleMappedCategory').value = mappedCategory;
-    document.getElementById('ruleDescription').value = description;
-    document.getElementById('ruleModal').classList.add('show');
-}
-
-function closeRuleModal() {
-    document.getElementById('ruleModal').classList.remove('show');
-}
-
-function saveRule() {
-    var id = document.getElementById('ruleId').value;
-    var className = document.getElementById('ruleClassName').value;
-    var mappedCategory = document.getElementById('ruleMappedCategory').value;
-    var description = document.getElementById('ruleDescription').value;
-    if (!className.trim()) { alert('请输入检测类别'); return; }
-
-    var params = 'className=' + encodeURIComponent(className) + '&mappedCategory=' + encodeURIComponent(mappedCategory) + '&description=' + encodeURIComponent(description) + '&status=1';
-    if (id) params += '&id=' + id;
-
-    fetch(contextPath + '/admin/rule/save', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: params
-    }).then(r => r.json()).then(data => {
-        if (data.code === 200) { closeRuleModal(); location.reload(); }
-        else { alert(data.message || '保存失败'); }
-    }).catch(err => { alert('操作失败'); });
-}
-
-function toggleStatus(id, currentStatus) {
-    var newStatus = currentStatus == 1 ? 0 : 1;
-    var params = 'id=' + id + '&className=&mappedCategory=可回收物&description=&status=' + newStatus;
-    fetch(contextPath + '/admin/rule/save', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: params
-    }).then(r => r.json()).then(data => {
-        if (data.code === 200) { location.reload(); }
-        else { alert(data.message || '操作失败'); }
-    }).catch(err => { alert('操作失败'); });
-}
+window._pageConfig = {
+    contextPath: '${pageContext.request.contextPath}',
+    csrfToken: '${sessionScope._csrfToken}'
+};
 </script>
+<script src="${pageContext.request.contextPath}/js/common.js"></script>
+<script src="${pageContext.request.contextPath}/js/rule-list.js"></script>
 </body>
 </html>

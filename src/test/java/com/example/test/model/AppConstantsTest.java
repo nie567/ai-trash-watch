@@ -1,5 +1,6 @@
 package com.example.test.model;
 
+import com.example.util.AppConfig;
 import com.example.util.AppConstants;
 import org.junit.Test;
 
@@ -53,7 +54,7 @@ public class AppConstantsTest {
 
     @Test
     public void testDjlInferenceUrl() {
-        assertTrue("DJL URL应指向8080端口", AppConstants.DJL_INFERENCE_URL.contains("8080"));
+        assertTrue("DJL URL应指向8080端口", AppConfig.getDjlInferenceUrl().contains("8080"));
     }
 
     @Test

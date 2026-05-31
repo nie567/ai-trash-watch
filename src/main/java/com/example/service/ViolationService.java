@@ -1,12 +1,20 @@
 package com.example.service;
 
+import com.example.dao.RectificationTaskDAO;
+import com.example.dao.UserDAO;
 import com.example.dao.ViolationRecordDAO;
 import com.example.model.DetectionResult;
 import com.example.model.GarbageRecord;
 import com.example.model.PageResult;
+import com.example.model.RectificationTask;
+import com.example.model.User;
 import com.example.model.ViolationRecord;
 import com.example.util.AppConstants;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
 import java.util.List;
 
 /**
@@ -14,17 +22,45 @@ import java.util.List;
  */
 public class ViolationService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ViolationService.class);
+
     private final ViolationRecordDAO violationDAO;
+    private final RectificationTaskDAO rectTaskDAO;
+    private final UserDAO userDAO;
 
     public ViolationService() {
         this.violationDAO = new ViolationRecordDAO();
+        this.rectTaskDAO = new RectificationTaskDAO();
+        this.userDAO = new UserDAO();
+    }
+
+    public ViolationService(ViolationRecordDAO violationDAO, RectificationTaskDAO rectTaskDAO) {
+        this.violationDAO = violationDAO;
+        this.rectTaskDAO = rectTaskDAO;
+        this.userDAO = new UserDAO();
     }
 
     /**
-     * 判断是否需要生成违规记录，若需要则创建
-     * 触发条件: isCorrect==0 或 (isMixed==1 且用户选择单一类别)
+     * 判断是否需要生成违规记录，若需要则创建（无外部事务）
      */
     public void createViolationIfNeeded(GarbageRecord record, List<DetectionResult> details) {
+        createViolationIfNeeded(record, details, null);
+    }
+
+    /**
+     * 判断是否需要生成违规记录，若需要则创建（支持外部事务连接）
+     * 触发条件: isCorrect==0 或 (isMixed==1 且用户选择单一类别)
+     */
+    public void createViolationIfNeeded(GarbageRecord record, List<DetectionResult> details, Connection conn) {
+        // 管理员投放不生成违规记录（管理员负责监督，不是被监管对象）
+        if (record.getUserId() != null) {
+            User user = userDAO.findById(record.getUserId().intValue());
+            if (user != null && user.isAdmin()) {
+                logger.info("管理员投放记录不生成违规, userId={}, recordId={}", record.getUserId(), record.getId());
+                return;
+            }
+        }
+
         boolean needViolation = false;
         String violationType;
 
@@ -62,7 +98,7 @@ public class ViolationService {
         violation.setLevel(level);
         violation.setStatus(AppConstants.VIOLATION_STATUS_PENDING);
 
-        violationDAO.insert(violation);
+        violationDAO.insert(violation, conn);
     }
 
     /**
@@ -100,13 +136,20 @@ public class ViolationService {
      * 用户违规记录分页
      */
     public PageResult<ViolationRecord> getUserViolations(Long userId, int page, int pageSize) {
+        return getUserViolations(userId, page, pageSize, null);
+    }
+
+    /**
+     * 用户违规记录分页，支持状态筛选
+     */
+    public PageResult<ViolationRecord> getUserViolations(Long userId, int page, int pageSize, String status) {
         if (page < 1) page = AppConstants.DEFAULT_PAGE_NUM;
         if (pageSize < 1) pageSize = AppConstants.DEFAULT_PAGE_SIZE;
         if (pageSize > AppConstants.MAX_PAGE_SIZE) pageSize = AppConstants.MAX_PAGE_SIZE;
 
         int offset = (page - 1) * pageSize;
-        List<ViolationRecord> list = violationDAO.findByUserId(userId, offset, pageSize);
-        int total = violationDAO.countByUserId(userId);
+        List<ViolationRecord> list = violationDAO.findByUserId(userId, offset, pageSize, status);
+        int total = violationDAO.countByUserId(userId, status);
         return new PageResult<>(list, total, page, pageSize);
     }
 

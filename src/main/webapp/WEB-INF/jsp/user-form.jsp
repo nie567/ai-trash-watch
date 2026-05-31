@@ -19,9 +19,9 @@
                 <div class="alert alert-error">${error}</div>
             </c:if>
 
-            <form action="${pageContext.request.contextPath}/user/${isEdit ? 'edit' : 'add'}" 
+            <form action="${pageContext.request.contextPath}/user/${isEdit ? 'edit' : 'add'}"
                   method="post" class="form">
-                
+                <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
                 <c:if test="${isEdit}">
                     <input type="hidden" name="id" value="${user.id}">
                 </c:if>

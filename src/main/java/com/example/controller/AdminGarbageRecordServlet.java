@@ -5,6 +5,7 @@ import com.example.model.GarbageRecordDetailVO;
 import com.example.model.PageResult;
 import com.example.service.GarbageRecordService;
 import com.example.util.AppConstants;
+import com.example.util.AppContext;
 import com.example.util.Result;
 
 import jakarta.servlet.ServletException;
@@ -14,18 +15,22 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 管理员侧投放记录控制器
  */
 @WebServlet("/admin/garbage-record/*")
 public class AdminGarbageRecordServlet extends HttpServlet {
+    private static final Logger logger = LoggerFactory.getLogger(AdminGarbageRecordServlet.class);
+
 
     private GarbageRecordService recordService;
 
     @Override
     public void init() throws ServletException {
-        recordService = new GarbageRecordService();
+        recordService = AppContext.get().getGarbageRecordService();
     }
 
     @Override
@@ -62,7 +67,7 @@ public class AdminGarbageRecordServlet extends HttpServlet {
                 recordService.reviewRecord(id, finalCategory, reviewComment);
                 out.write(Result.success().toJson());
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("unexpected error", e);
                 out.write(Result.error(e.getMessage()).toJson());
             }
         } else {

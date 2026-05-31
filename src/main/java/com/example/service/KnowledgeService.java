@@ -4,6 +4,9 @@ import com.example.dao.KnowledgeBaseDAO;
 import com.example.model.KnowledgeBase;
 import com.example.util.BusinessException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 /**
@@ -11,10 +14,16 @@ import java.util.List;
  */
 public class KnowledgeService {
 
+    private static final Logger logger = LoggerFactory.getLogger(KnowledgeService.class);
+
     private final KnowledgeBaseDAO knowledgeDAO;
 
     public KnowledgeService() {
         this.knowledgeDAO = new KnowledgeBaseDAO();
+    }
+
+    public KnowledgeService(KnowledgeBaseDAO knowledgeDAO) {
+        this.knowledgeDAO = knowledgeDAO;
     }
 
     /**

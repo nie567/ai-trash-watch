@@ -15,16 +15,16 @@
     <div class="main-content">
         <!-- 提示消息 -->
         <c:if test="${param.success == 'created'}">
-            <div class="alert alert-success" style="margin-bottom:20px;padding:12px 16px;background:#d4edda;color:#155724;border-radius:4px;">用户创建成功</div>
+            <div class="alert alert-success">用户创建成功</div>
         </c:if>
         <c:if test="${param.success == 'updated'}">
-            <div class="alert alert-success" style="margin-bottom:20px;padding:12px 16px;background:#d4edda;color:#155724;border-radius:4px;">用户更新成功</div>
+            <div class="alert alert-success">用户更新成功</div>
         </c:if>
         <c:if test="${param.success == 'deleted'}">
-            <div class="alert alert-success" style="margin-bottom:20px;padding:12px 16px;background:#d4edda;color:#155724;border-radius:4px;">用户删除成功</div>
+            <div class="alert alert-success">用户删除成功</div>
         </c:if>
         <c:if test="${param.success == 'statusUpdated'}">
-            <div class="alert alert-success" style="margin-bottom:20px;padding:12px 16px;background:#d4edda;color:#155724;border-radius:4px;">状态更新成功</div>
+            <div class="alert alert-success">状态更新成功</div>
         </c:if>
         
         <div class="card">
@@ -35,10 +35,10 @@
             </div>
             
             <!-- 搜索区域 -->
-            <div style="background:#f8f9fa;padding:16px;border-radius:6px;margin-bottom:24px;">
+            <div style="background:rgba(255,255,255,0.03);padding:16px;border-radius:8px;margin-bottom:24px;border:1px solid rgba(255,255,255,0.06);">
                 <form method="get" action="${pageContext.request.contextPath}/admin/users" style="display:flex;gap:12px;align-items:center;">
                     <input type="text" name="keyword" placeholder="搜索用户名..." value="${keyword}" 
-                           style="flex:1;padding:10px 14px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+                           class="search-input" style="flex:1;">
                     <button type="submit" class="btn btn-primary">搜索</button>
                     <c:if test="${not empty keyword}">
                         <a href="${pageContext.request.contextPath}/admin/users" class="btn btn-secondary">清除</a>
@@ -49,9 +49,9 @@
             <!-- 用户表格 -->
             <c:choose>
                 <c:when test="${empty users}">
-                    <div style="text-align:center;padding:60px 20px;color:#7f8c8d;">
-                        <p style="font-size:16px;margin-bottom:8px;">暂无用户数据</p>
-                        <p style="font-size:14px;">点击上方"添加用户"创建新用户</p>
+                    <div class="text-center" style="padding:60px 20px;">
+                        <p class="text-muted" style="font-size:16px;margin-bottom:8px;">暂无用户数据</p>
+                        <p class="text-muted" style="font-size:14px;">点击上方"添加用户"创建新用户</p>
                     </div>
                 </c:when>
                 <c:otherwise>
@@ -72,33 +72,16 @@
                             <c:forEach items="${users}" var="user">
                                 <tr>
                                     <td>${user.id}</td>
-                                    <td><strong>${user.username}</strong></td>
+                                    <td><strong style="color:var(--accent-purple-end)">${user.username}</strong></td>
                                     <td>${user.email}</td>
                                     <td>${user.phone}</td>
-                                    <td>
-                                        <span class="badge ${user.role == 'admin' ? 'badge-submitted' : 'badge-pending'}">
-                                            ${user.role == 'admin' ? '管理员' : '用户'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge ${user.status == 1 ? 'badge-approved' : 'badge-rejected'}">
-                                            ${user.status == 1 ? '正常' : '禁用'}
-                                        </span>
-                                    </td>
-                                    <td><fmt:formatDate value="${user.createTime}" pattern="yyyy-MM-dd HH:mm" /></td>
-                                    <td>
-                                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                                            <a href="${pageContext.request.contextPath}/admin/users/edit?id=${user.id}" 
-                                               class="btn btn-small btn-primary">编辑</a>
-                                            <c:if test="${user.id != sessionScope.loginUser.id}">
-                                                <button onclick="updateStatus(${user.id}, ${user.status == 1 ? 0 : 1})" 
-                                                        class="btn btn-small ${user.status == 1 ? 'btn-warning' : 'btn-success'}">
-                                                    ${user.status == 1 ? '禁用' : '启用'}
-                                                </button>
-                                                <button onclick="deleteUser(${user.id})" 
-                                                        class="btn btn-small btn-danger">删除</button>
-                                            </c:if>
-                                        </div>
+                                    <td><span class="badge ${user.role == 'admin' ? 'badge-submitted' : 'badge-pending'}">${user.role == 'admin' ? '管理员' : '用户'}</span></td>
+                                    <td><span class="badge ${user.status == 1 ? 'badge-rectified' : 'badge-rejected'}">${user.status == 1 ? '正常' : '禁用'}</span></td>
+                                    <td><fmt:formatDate value="${user.createTime}" pattern="yyyy-MM-dd HH:mm"/></td>
+                                    <td class="actions">
+                                        <a href="${pageContext.request.contextPath}/admin/users/edit?id=${user.id}" class="btn btn-small btn-secondary">编辑</a>
+                                        <button class="btn btn-small ${user.status == 1 ? 'btn-warning' : 'btn-success'}" onclick="toggleStatus(${user.id}, ${user.status})">${user.status == 1 ? '禁用' : '启用'}</button>
+                                        <button class="btn btn-small btn-danger" onclick="deleteUser(${user.id}, '${user.username}')">删除</button>
                                     </td>
                                 </tr>
                             </c:forEach>
@@ -140,40 +123,12 @@
     </div>
     
 <script>
-var contextPath = '${pageContext.request.contextPath}';
-
-function updateStatus(userId, newStatus) {
-    var msg = newStatus == 1 ? '确定要启用该用户吗？' : '确定要禁用该用户吗？';
-    if (!confirm(msg)) return;
-    
-    fetch(contextPath + '/admin/users/' + userId + '/status?status=' + newStatus, { method: 'PUT' })
-    .then(r => r.json())
-    .then(data => {
-        if (data.code === 200) {
-            alert('状态更新成功');
-            location.reload();
-        } else {
-            alert(data.message || '状态更新失败');
-        }
-    })
-    .catch(err => alert('操作失败，请稍后重试'));
-}
-
-function deleteUser(userId) {
-    if (!confirm('确定要删除该用户吗？此操作不可恢复！')) return;
-    
-    fetch(contextPath + '/admin/users/' + userId, { method: 'DELETE' })
-    .then(r => r.json())
-    .then(data => {
-        if (data.code === 200) {
-            alert('删除成功');
-            location.reload();
-        } else {
-            alert(data.message || '删除失败');
-        }
-    })
-    .catch(err => alert('操作失败，请稍后重试'));
-}
+window._pageConfig = {
+    contextPath: '${pageContext.request.contextPath}',
+    csrfToken: '${sessionScope._csrfToken}'
+};
 </script>
+<script src="${pageContext.request.contextPath}/js/common.js"></script>
+<script src="${pageContext.request.contextPath}/js/user-list.js"></script>
 </body>
 </html>

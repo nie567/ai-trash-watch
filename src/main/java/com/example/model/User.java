@@ -70,4 +70,9 @@ public class User {
     public boolean isActive() {
         return this.status != null && this.status == 1;
     }
+
+    public void clearSensitiveFields() {
+        this.password = null;
+        this.passwordHash = null;
+    }
 }

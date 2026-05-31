@@ -4,6 +4,9 @@ import com.example.dao.GarbageRuleDAO;
 import com.example.model.GarbageRule;
 import com.example.util.BusinessException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,10 +16,16 @@ import java.util.Map;
  */
 public class RuleService {
 
+    private static final Logger logger = LoggerFactory.getLogger(RuleService.class);
+
     private final GarbageRuleDAO ruleDAO;
 
     public RuleService() {
         this.ruleDAO = new GarbageRuleDAO();
+    }
+
+    public RuleService(GarbageRuleDAO ruleDAO) {
+        this.ruleDAO = ruleDAO;
     }
 
     /**

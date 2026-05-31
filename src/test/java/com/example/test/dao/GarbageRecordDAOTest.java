@@ -25,14 +25,14 @@ public class GarbageRecordDAOTest extends BaseTest {
         
         // 插入测试用户（假设user表已存在）
         executeSQL("INSERT IGNORE INTO user (id, username, password_hash, role, status) VALUES " +
-                "(1, 'testuser1', 'hash1', 'user', 1), " +
-                "(2, 'testuser2', 'hash2', 'user', 1)");
+                "(9001, 'testuser1', 'hash1', 'user', 1), " +
+                "(9002, 'testuser2', 'hash2', 'user', 1)");
         
         // 插入测试投放记录
         executeSQL("INSERT INTO garbage_record (user_id, image_name, image_path, recommended_category, selected_category, is_correct, status) VALUES " +
-                "(1, 'test1.jpg', '/input/test1.jpg', '可回收物', '可回收物', 1, 'PENDING'), " +
-                "(1, 'test2.jpg', '/input/test2.jpg', '厨余垃圾', '其他垃圾', 0, 'PENDING'), " +
-                "(2, 'test3.jpg', '/input/test3.jpg', '可回收物', '可回收物', 1, 'REVIEWED')");
+                "(9001, 'test1.jpg', '/input/test1.jpg', '可回收物', '可回收物', 1, 'PENDING'), " +
+                "(9001, 'test2.jpg', '/input/test2.jpg', '厨余垃圾', '其他垃圾', 0, 'PENDING'), " +
+                "(9002, 'test3.jpg', '/input/test3.jpg', '可回收物', '可回收物', 1, 'REVIEWED')");
     }
 
     /**
@@ -41,7 +41,7 @@ public class GarbageRecordDAOTest extends BaseTest {
     @Test
     public void testInsert() {
         GarbageRecord record = new GarbageRecord();
-        record.setUserId(1L);
+        record.setUserId(9001L);
         record.setImageName("new.jpg");
         record.setImagePath("/input/new.jpg");
         record.setRecommendedCategory("可回收物");
@@ -85,21 +85,21 @@ public class GarbageRecordDAOTest extends BaseTest {
     @Test
     public void testFindByUserId() {
         // 查询用户1的记录
-        List<GarbageRecord> user1Records = recordDAO.findByUserId(1L, 0, 10);
+        List<GarbageRecord> user1Records = recordDAO.findByUserId(9001L, 0, 10);
         assertNotNull("记录列表不应为null", user1Records);
         assertEquals("用户1应有2条记录", 2, user1Records.size());
         
         // 验证所有记录都属于用户1
         for (GarbageRecord record : user1Records) {
-            assertEquals("记录应属于用户1", Long.valueOf(1L), record.getUserId());
+            assertEquals("记录应属于用户1", Long.valueOf(9001L), record.getUserId());
         }
         
         // 查询用户2的记录
-        List<GarbageRecord> user2Records = recordDAO.findByUserId(2L, 0, 10);
+        List<GarbageRecord> user2Records = recordDAO.findByUserId(9002L, 0, 10);
         assertEquals("用户2应有1条记录", 1, user2Records.size());
         
         // 测试分页
-        List<GarbageRecord> pagedRecords = recordDAO.findByUserId(1L, 0, 1);
+        List<GarbageRecord> pagedRecords = recordDAO.findByUserId(9001L, 0, 1);
         assertEquals("分页查询应返回1条记录", 1, pagedRecords.size());
     }
 
@@ -130,10 +130,10 @@ public class GarbageRecordDAOTest extends BaseTest {
      */
     @Test
     public void testCountByUserId() {
-        int count1 = recordDAO.countByUserId(1L);
+        int count1 = recordDAO.countByUserId(9001L);
         assertEquals("用户1应有2条记录", 2, count1);
         
-        int count2 = recordDAO.countByUserId(2L);
+        int count2 = recordDAO.countByUserId(9002L);
         assertEquals("用户2应有1条记录", 1, count2);
         
         int count3 = recordDAO.countByUserId(999L);

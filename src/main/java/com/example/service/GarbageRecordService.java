@@ -7,7 +7,13 @@ import com.example.dao.ViolationRecordDAO;
 import com.example.model.*;
 import com.example.util.AppConstants;
 import com.example.util.BusinessException;
+import com.example.util.DBUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +21,8 @@ import java.util.List;
  * 投放记录核心业务服务
  */
 public class GarbageRecordService {
+
+    private static final Logger logger = LoggerFactory.getLogger(GarbageRecordService.class);
 
     private final GarbageRecordDAO recordDAO;
     private final DetectionResultDAO detectionDAO;
@@ -30,8 +38,18 @@ public class GarbageRecordService {
         this.rectTaskDAO = new RectificationTaskDAO();
     }
 
+    public GarbageRecordService(GarbageRecordDAO recordDAO, DetectionResultDAO detectionDAO,
+                                ViolationRecordDAO violationDAO, RectificationTaskDAO rectTaskDAO,
+                                ViolationService violationService) {
+        this.recordDAO = recordDAO;
+        this.detectionDAO = detectionDAO;
+        this.violationDAO = violationDAO;
+        this.rectTaskDAO = rectTaskDAO;
+        this.violationService = violationService;
+    }
+
     /**
-     * 保存投放记录及检测明细
+     * 保存投放记录及检测明细（事务保护）
      * 判定isCorrect，若错误则调用ViolationService生成违规记录
      */
     public Long saveRecord(Long userId, GarbageRecordSubmitDTO dto) {
@@ -66,51 +84,74 @@ public class GarbageRecordService {
         record.setStatus(AppConstants.RECORD_STATUS_PENDING);
         record.setRemark(dto.getRemark());
 
-        // 保存投放记录
-        Long recordId = recordDAO.insert(record);
-        if (recordId == null) {
-            throw new BusinessException(500, "保存投放记录失败");
-        }
-        record.setId(recordId);
+        Connection conn = null;
+        try {
+            conn = DBUtil.getConnection();
+            DBUtil.beginTransaction(conn);
 
-        // 保存检测明细
-        if (dto.getDetections() != null && !dto.getDetections().isEmpty()) {
-            List<DetectionResult> detectionResults = new ArrayList<>();
-            for (DetectionResultDTO d : dto.getDetections()) {
-                DetectionResult dr = new DetectionResult();
-                dr.setRecordId(recordId);
-                dr.setClassName(d.getClassName());
-                dr.setConfidence(d.getConfidence());
-                dr.setXMin(d.getXMin());
-                dr.setYMin(d.getYMin());
-                dr.setXMax(d.getXMax());
-                dr.setYMax(d.getYMax());
-                dr.setMappedCategory(d.getMappedCategory());
-                detectionResults.add(dr);
+            // 保存投放记录
+            Long recordId = recordDAO.insert(record, conn);
+            if (recordId == null) {
+                throw new BusinessException(500, "保存投放记录失败");
             }
-            detectionDAO.batchInsert(detectionResults);
-        }
+            record.setId(recordId);
 
-        // 如果投放错误，自动生成违规记录
-        if (isCorrect == 0) {
-            List<DetectionResult> details = detectionDAO.findByRecordId(recordId);
-            violationService.createViolationIfNeeded(record, details);
-        }
+            // 保存检测明细
+            if (dto.getDetections() != null && !dto.getDetections().isEmpty()) {
+                List<DetectionResult> detectionResults = new ArrayList<>();
+                for (DetectionResultDTO d : dto.getDetections()) {
+                    DetectionResult dr = new DetectionResult();
+                    dr.setRecordId(recordId);
+                    dr.setClassName(d.getClassName());
+                    dr.setConfidence(d.getConfidence());
+                    dr.setXMin(d.getXMin());
+                    dr.setYMin(d.getYMin());
+                    dr.setXMax(d.getXMax());
+                    dr.setYMax(d.getYMax());
+                    dr.setMappedCategory(d.getMappedCategory());
+                    detectionResults.add(dr);
+                }
+                detectionDAO.batchInsert(detectionResults, conn);
+            }
 
-        return recordId;
+            // 如果投放错误，自动生成违规记录
+            if (isCorrect == 0) {
+                List<DetectionResult> details = detectionDAO.findByRecordId(recordId);
+                violationService.createViolationIfNeeded(record, details, conn);
+            }
+
+            DBUtil.commitTransaction(conn);
+            return recordId;
+        } catch (BusinessException e) {
+            DBUtil.rollbackTransaction(conn);
+            throw e;
+        } catch (SQLException e) {
+            DBUtil.rollbackTransaction(conn);
+            logger.error("保存投放记录失败, userId={}", userId, e);
+            throw new BusinessException(500, "保存投放记录失败");
+        } finally {
+            DBUtil.closeConnection(conn);
+        }
     }
 
     /**
      * 用户投放记录分页
      */
     public PageResult<GarbageRecord> getUserRecords(Long userId, int page, int pageSize) {
+        return getUserRecords(userId, page, pageSize, null);
+    }
+
+    /**
+     * 用户投放记录分页，支持状态筛选
+     */
+    public PageResult<GarbageRecord> getUserRecords(Long userId, int page, int pageSize, String status) {
         if (page < 1) page = AppConstants.DEFAULT_PAGE_NUM;
         if (pageSize < 1) pageSize = AppConstants.DEFAULT_PAGE_SIZE;
         if (pageSize > AppConstants.MAX_PAGE_SIZE) pageSize = AppConstants.MAX_PAGE_SIZE;
 
         int offset = (page - 1) * pageSize;
-        List<GarbageRecord> list = recordDAO.findByUserId(userId, offset, pageSize);
-        int total = recordDAO.countByUserId(userId);
+        List<GarbageRecord> list = recordDAO.findByUserId(userId, offset, pageSize, status);
+        int total = recordDAO.countByUserId(userId, status);
         return new PageResult<>(list, total, page, pageSize);
     }
 
@@ -162,7 +203,7 @@ public class GarbageRecordService {
     }
 
     /**
-     * 管理员人工复核
+     * 管理员人工复核（事务保护）
      * 复核逻辑：
      * 1. finalCategory是管理员确认的正确类别
      * 2. 用户选择的selectedCategory与finalCategory对比判断用户是否正确
@@ -185,36 +226,50 @@ public class GarbageRecordService {
             isCorrect = 1;
         }
 
-        // 更新投放记录
-        recordDAO.updateReviewResult(recordId, finalCategory, isCorrect,
-                AppConstants.RECORD_STATUS_REVIEWED, reviewComment);
+        Connection conn = null;
+        try {
+            conn = DBUtil.getConnection();
+            DBUtil.beginTransaction(conn);
 
-        // 处理关联的违规记录
-        ViolationRecord violation = violationDAO.findByRecordId(recordId);
-        if (violation != null) {
-            if (isCorrect == 1) {
-                // 复核确认用户正确，忽略违规记录（误判）
-                violationDAO.updateStatus(violation.getId(), AppConstants.VIOLATION_STATUS_IGNORED);
+            // 更新投放记录
+            recordDAO.updateReviewResult(recordId, finalCategory, isCorrect,
+                    AppConstants.RECORD_STATUS_REVIEWED, reviewComment, conn);
+
+            // 处理关联的违规记录
+            ViolationRecord violation = violationDAO.findByRecordId(recordId);
+            if (violation != null) {
+                if (isCorrect == 1) {
+                    // 复核确认用户正确，忽略违规记录（误判）
+                    violationDAO.updateStatus(violation.getId(), AppConstants.VIOLATION_STATUS_IGNORED, conn);
+                } else {
+                    // 复核确认用户错误，保持违规待处理状态
+                    // 如果违规记录状态是IGNORED，恢复为PENDING
+                    if (AppConstants.VIOLATION_STATUS_IGNORED.equals(violation.getStatus())) {
+                        violationDAO.updateStatus(violation.getId(), AppConstants.VIOLATION_STATUS_PENDING, conn);
+                    }
+                }
             } else {
-                // 复核确认用户错误，保持违规待处理状态
-                // 如果违规记录状态是IGNORED，恢复为PENDING
-                if (AppConstants.VIOLATION_STATUS_IGNORED.equals(violation.getStatus())) {
-                    violationDAO.updateStatus(violation.getId(), AppConstants.VIOLATION_STATUS_PENDING);
+                // 没有违规记录，但复核确认用户错误，需要创建违规记录
+                if (isCorrect == 0) {
+                    record.setIsCorrect(0);
+                    record.setId(recordId);
+                    List<DetectionResult> details = detectionDAO.findByRecordId(recordId);
+                    violationService.createViolationIfNeeded(record, details, conn);
                 }
             }
-        } else {
-            // 没有违规记录，但复核确认用户错误，需要创建违规记录
-            if (isCorrect == 0) {
-                record.setIsCorrect(0);
-                record.setId(recordId);
-                List<DetectionResult> details = detectionDAO.findByRecordId(recordId);
-                violationService.createViolationIfNeeded(record, details);
-            }
+
+            DBUtil.commitTransaction(conn);
+        } catch (SQLException e) {
+            DBUtil.rollbackTransaction(conn);
+            logger.error("复核操作失败, recordId={}", recordId, e);
+            throw new BusinessException(500, "复核操作失败");
+        } finally {
+            DBUtil.closeConnection(conn);
         }
     }
 
     /**
-     * 删除投放记录（级联删除关联数据）
+     * 删除投放记录（事务保护，级联删除关联数据）
      * 删除顺序：整改任务 -> 违规记录 -> 检测明细 -> 投放记录
      */
     public void deleteRecord(Long recordId) {
@@ -227,25 +282,38 @@ public class GarbageRecordService {
             throw new BusinessException(404, "投放记录不存在");
         }
 
-        // 1. 查找关联的违规记录
-        ViolationRecord violation = violationDAO.findByRecordId(recordId);
-        
-        if (violation != null) {
-            // 2. 查找并删除关联的整改任务
-            RectificationTask rectTask = rectTaskDAO.findByViolationId(violation.getId());
-            if (rectTask != null) {
-                // 删除整改任务（需要先在DAO中添加delete方法）
-                rectTaskDAO.deleteById(rectTask.getId());
+        Connection conn = null;
+        try {
+            conn = DBUtil.getConnection();
+            DBUtil.beginTransaction(conn);
+
+            // 1. 查找关联的违规记录
+            ViolationRecord violation = violationDAO.findByRecordId(recordId);
+
+            if (violation != null) {
+                // 2. 查找并删除关联的整改任务
+                RectificationTask rectTask = rectTaskDAO.findByViolationId(violation.getId());
+                if (rectTask != null) {
+                    rectTaskDAO.deleteById(rectTask.getId(), conn);
+                }
+
+                // 3. 删除违规记录
+                violationDAO.deleteById(violation.getId(), conn);
             }
-            
-            // 3. 删除违规记录
-            violationDAO.deleteById(violation.getId());
+
+            // 4. 删除检测明细
+            detectionDAO.deleteByRecordId(recordId, conn);
+
+            // 5. 删除投放记录
+            recordDAO.deleteById(recordId, conn);
+
+            DBUtil.commitTransaction(conn);
+        } catch (SQLException e) {
+            DBUtil.rollbackTransaction(conn);
+            logger.error("删除投放记录失败, recordId={}", recordId, e);
+            throw new BusinessException(500, "删除投放记录失败");
+        } finally {
+            DBUtil.closeConnection(conn);
         }
-
-        // 4. 删除检测明细
-        detectionDAO.deleteByRecordId(recordId);
-
-        // 5. 删除投放记录
-        recordDAO.deleteById(recordId);
     }
 }

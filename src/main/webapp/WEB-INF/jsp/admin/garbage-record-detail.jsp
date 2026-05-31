@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -19,8 +20,9 @@
 
             <div class="image-pair">
                 <div class="image-box">
-                    <c:if test="${not empty r.imagePath}">
-                        <img src="${pageContext.request.contextPath}/image/input/${r.imageName}" alt="原图">
+                    <c:if test="${not empty r.imageName}">
+                        <img src="${pageContext.request.contextPath}/image/input/${r.imageName}" alt="原图"
+                             onerror="this.style.display='none';this.parentNode.innerHTML+='<p class=text-muted>图片文件不存在</p>'">
                     </c:if>
                     <p>原图</p>
                 </div>
@@ -33,20 +35,19 @@
             </div>
 
             <div class="info-grid">
-                <div class="info-item"><span class="info-label">ID：</span><span class="info-value">${r.id}</span></div>
-                <div class="info-item"><span class="info-label">用户ID：</span><span class="info-value">${r.userId}</span></div>
-                <div class="info-item"><span class="info-label">图片名称：</span><span class="info-value">${r.imageName}</span></div>
-                <div class="info-item"><span class="info-label">识别摘要：</span><span class="info-value">${r.detectedSummary}</span></div>
-                <div class="info-item"><span class="info-label">推荐类别：</span><span class="info-value">${r.recommendedCategory}</span></div>
-                <div class="info-item"><span class="info-label">选择类别：</span><span class="info-value">${r.selectedCategory}</span></div>
-                <div class="info-item"><span class="info-label">最终类别：</span><span class="info-value">${empty r.finalCategory ? '-' : r.finalCategory}</span></div>
-                <div class="info-item"><span class="info-label">是否正确：</span><span class="info-value">${r.isCorrect == 1 ? '正确' : '错误'}</span></div>
-                <div class="info-item"><span class="info-label">是否混投：</span><span class="info-value">${r.isMixed == 1 ? '是' : '否'}</span></div>
-                <div class="info-item"><span class="info-label">状态：</span><span class="info-value">${r.status}</span></div>
-                <div class="info-item"><span class="info-label">复核意见：</span><span class="info-value">${empty r.reviewComment ? '-' : r.reviewComment}</span></div>
-                <div class="info-item"><span class="info-label">创建时间：</span><span class="info-value"><fmt:formatDate value="${r.createTime}" pattern="yyyy-MM-dd HH:mm:ss"/></span></div>
+                <div class="info-item"><span class="info-label">ID</span><span class="info-value"><c:out value="${r.id}"/></span></div>
+                <div class="info-item"><span class="info-label">用户ID</span><span class="info-value"><c:out value="${r.userId}"/></span></div>
+                <div class="info-item"><span class="info-label">图片名称</span><span class="info-value"><c:out value="${r.imageName}"/></span></div>
+                <div class="info-item"><span class="info-label">识别摘要</span><span class="info-value"><c:out value="${r.detectedSummary}"/></span></div>
+                <div class="info-item"><span class="info-label">推荐类别</span><span class="info-value"><span class="badge ${r.recommendedCategory == '可回收物' ? 'category-recyclable' : r.recommendedCategory == '厨余垃圾' ? 'category-kitchen' : r.recommendedCategory == '有害垃圾' ? 'category-hazardous' : r.recommendedCategory == '其他垃圾' ? 'category-other' : 'category-mixed'}"><c:out value="${r.recommendedCategory}"/></span></span></div>
+                <div class="info-item"><span class="info-label">选择类别</span><span class="info-value"><span class="badge ${r.selectedCategory == '可回收物' ? 'category-recyclable' : r.selectedCategory == '厨余垃圾' ? 'category-kitchen' : r.selectedCategory == '有害垃圾' ? 'category-hazardous' : r.selectedCategory == '其他垃圾' ? 'category-other' : 'category-mixed'}"><c:out value="${r.selectedCategory}"/></span></span></div>
+                <div class="info-item"><span class="info-label">最终类别</span><span class="info-value"><span class="badge ${r.finalCategory == '可回收物' ? 'category-recyclable' : r.finalCategory == '厨余垃圾' ? 'category-kitchen' : r.finalCategory == '有害垃圾' ? 'category-hazardous' : r.finalCategory == '其他垃圾' ? 'category-other' : 'category-mixed'}"><c:out value="${empty r.finalCategory ? '-' : r.finalCategory}"/></span></span></div>
+                <div class="info-item"><span class="info-label">是否正确</span><span class="info-value"><c:choose><c:when test="${r.isCorrect == 1}"><span class="text-success">✓ 正确</span></c:when><c:otherwise><span class="text-danger">✗ 错误</span></c:otherwise></c:choose></span></div>
+                <div class="info-item"><span class="info-label">是否混投</span><span class="info-value"><c:choose><c:when test="${r.isMixed == 1}"><span class="text-warning">是</span></c:when><c:otherwise>否</c:otherwise></c:choose></span></div>
+                <div class="info-item"><span class="info-label">状态</span><span class="info-value"><span class="badge ${r.status == 'PENDING' ? 'badge-pending' : 'badge-reviewed'}">${r.status == 'PENDING' ? '待复核' : '已复核'}</span></span></div>
+                <div class="info-item"><span class="info-label">复核意见</span><span class="info-value"><c:out value="${empty r.reviewComment ? '-' : r.reviewComment}"/></span></div>
+                <div class="info-item"><span class="info-label">创建时间</span><span class="info-value"><fmt:formatDate value="${r.createTime}" pattern="yyyy-MM-dd HH:mm:ss"/></span></div>
             </div>
-        </div>
 
         <!-- 检测明细 -->
         <c:if test="${not empty detail.detections}">
@@ -56,7 +57,7 @@
                     <thead><tr><th>类别名称</th><th>置信度</th><th>映射类别</th></tr></thead>
                     <tbody>
                         <c:forEach items="${detail.detections}" var="d">
-                            <tr><td>${d.className}</td><td>${d.confidence}%</td><td>${d.mappedCategory}</td></tr>
+                            <tr><td><c:out value="${d.className}"/></td><td><c:out value="${d.confidence}%"/></td><td><c:out value="${d.mappedCategory}"/></td></tr>
                         </c:forEach>
                     </tbody>
                 </table>
@@ -94,37 +95,14 @@
     </div>
 
 <script>
-// 设置结果图片路径
-(function() {
-    var resultImg = document.getElementById('resultImg');
-    if (resultImg) {
-        var resultPath = '${r.resultImagePath}';
-        if (resultPath && resultPath.trim()) {
-            var fileName = resultPath.replace(/\\/g, '/');
-            fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
-            resultImg.src = '${pageContext.request.contextPath}/image/output/' + fileName;
-        }
-    }
-})();
-
-function submitReview() {
-    var params = 'id=${r.id}&finalCategory=' + encodeURIComponent(document.getElementById('finalCategory').value)
-        + '&reviewComment=' + encodeURIComponent(document.getElementById('reviewComment').value);
-    fetch('${pageContext.request.contextPath}/admin/garbage-record/review', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: params
-    }).then(r => r.json()).then(data => {
-        if (data.code === 200) {
-            document.getElementById('reviewStatus').innerHTML = '<span class="text-success">复核成功</span>';
-            setTimeout(function(){ location.reload(); }, 1000);
-        } else {
-            document.getElementById('reviewStatus').innerHTML = '<span class="text-danger">' + (data.message || '复核失败') + '</span>';
-        }
-    }).catch(err => {
-        document.getElementById('reviewStatus').innerHTML = '<span class="text-danger">操作失败</span>';
-    });
-}
+window._pageConfig = {
+    contextPath: '${fn:escapeXml(pageContext.request.contextPath)}',
+    csrfToken: '${fn:escapeXml(sessionScope._csrfToken)}',
+    recordId: '${fn:escapeXml(empty r.id ? "" : r.id)}',
+    resultImagePath: '${fn:escapeXml(r.resultImagePath)}'
+};
 </script>
+<script src="${pageContext.request.contextPath}/js/common.js"></script>
+<script src="${pageContext.request.contextPath}/js/garbage-record-detail.js"></script>
 </body>
 </html>

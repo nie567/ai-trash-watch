@@ -2,12 +2,19 @@
 <%@ page import="com.example.model.User" %>
 <%
     User loginUser = (User) session.getAttribute("loginUser");
-    String currentUri = request.getRequestURI();
+    // forward 后 getRequestURI() 返回 JSP 路径，需用 forward 属性获取原始 URI
+    String originalUri = (String) request.getAttribute("jakarta.servlet.forward.request_uri");
+    String currentUri = (originalUri != null) ? originalUri : request.getRequestURI();
     String contextPath = request.getContextPath();
 %>
 <nav class="navbar">
     <a class="navbar-brand" href="<%=contextPath%>/admin/dashboard">垃圾分类监管系统</a>
-    <ul class="navbar-menu">
+    <button class="navbar-toggle" id="navbarToggle" aria-label="菜单">
+        <span class="navbar-toggle-bar"></span>
+        <span class="navbar-toggle-bar"></span>
+        <span class="navbar-toggle-bar"></span>
+    </button>
+    <ul class="navbar-menu" id="navbarMenu">
         <li><a href="<%=contextPath%>/admin/dashboard" class="<%=currentUri.contains("/admin/dashboard") ? "active" : ""%>">仪表盘</a></li>
         <li><a href="<%=contextPath%>/admin/users" class="<%=currentUri.contains("/admin/users") ? "active" : ""%>">用户管理</a></li>
         <li><a href="<%=contextPath%>/admin/garbage-record/list" class="<%=currentUri.contains("/admin/garbage-record") ? "active" : ""%>">投放记录</a></li>

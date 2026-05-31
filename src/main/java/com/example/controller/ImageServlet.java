@@ -1,6 +1,6 @@
 package com.example.controller;
 
-import com.example.util.AppConstants;
+import com.example.util.AppConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -9,8 +9,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 图片访问Servlet
@@ -18,6 +19,8 @@ import java.nio.file.Paths;
  */
 @WebServlet(name = "ImageServlet", urlPatterns = {"/image/*"})
 public class ImageServlet extends HttpServlet {
+
+    private static final Logger logger = LoggerFactory.getLogger(ImageServlet.class);
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -29,56 +32,78 @@ public class ImageServlet extends HttpServlet {
             return;
         }
 
-        // 移除开头的斜杠
+        // 去掉开头的斜杠
         String imagePath = pathInfo.substring(1);
 
-        // 安全检查：防止路径遍历攻击
-        if (imagePath.contains("..") || imagePath.contains(":")) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "非法路径");
-            return;
-        }
-
-        // 构建完整文件路径
-        // imagePath格式: output/filename.jpg 或 input/filename.jpg
-        File imageFile;
+        // 选定允许访问的根目录（白名单）+ 请求的文件名
+        File baseDir;
+        String fileName;
         if (imagePath.startsWith("output/")) {
-            String fileName = imagePath.substring("output/".length());
-            imageFile = new File(AppConstants.DJL_OUTPUT_DIR, fileName);
+            baseDir = new File(AppConfig.getDjlOutputDir());
+            fileName = imagePath.substring("output/".length());
+        } else if (imagePath.startsWith("upload/")) {
+            baseDir = new File(AppConfig.getUploadDir());
+            fileName = imagePath.substring("upload/".length());
         } else if (imagePath.startsWith("input/")) {
-            String fileName = imagePath.substring("input/".length());
-            imageFile = new File(AppConstants.DJL_INPUT_DIR, fileName);
+            baseDir = new File(AppConfig.getDjlInputDir());
+            fileName = imagePath.substring("input/".length());
         } else {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "无效的图片路径格式");
             return;
         }
 
-        // 检查文件是否存在
-        if (!imageFile.exists() || !imageFile.isFile()) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND, "图片文件不存在: " + imagePath);
+        // 文件名只允许：字母/数字/下划线/点/短横，拒绝路径分隔符与相对路径片段
+        if (!isSafeFileName(fileName)) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "非法文件名");
             return;
         }
 
-        // 确定Content-Type
-        String fileName = imageFile.getName().toLowerCase();
-        String contentType;
-        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
-            contentType = "image/jpeg";
-        } else if (fileName.endsWith(".png")) {
-            contentType = "image/png";
-        } else if (fileName.endsWith(".gif")) {
-            contentType = "image/gif";
-        } else if (fileName.endsWith(".bmp")) {
-            contentType = "image/bmp";
-        } else {
-            contentType = "application/octet-stream";
+        // 用 canonical path 比对父目录前缀，彻底阻断路径遍历、符号链接逃逸
+        File canonicalBase = baseDir.getCanonicalFile();
+        File targetFile = new File(canonicalBase, fileName).getCanonicalFile();
+        if (!targetFile.getPath().startsWith(canonicalBase.getPath() + File.separator)
+                && !targetFile.getPath().equals(canonicalBase.getPath())) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "非法路径");
+            return;
         }
 
-        // 设置响应头
-        resp.setContentType(contentType);
-        resp.setHeader("Cache-Control", "public, max-age=86400"); // 缓存1天
+        if (!targetFile.exists() || !targetFile.isFile()) {
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND, "图片文件不存在");
+            return;
+        }
 
-        // 读取并写入图片数据
-        Path path = imageFile.toPath();
-        Files.copy(path, resp.getOutputStream());
+        // 仅允许图片扩展名
+        String lowerName = targetFile.getName().toLowerCase();
+        String contentType;
+        if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) {
+            contentType = "image/jpeg";
+        } else if (lowerName.endsWith(".png")) {
+            contentType = "image/png";
+        } else if (lowerName.endsWith(".gif")) {
+            contentType = "image/gif";
+        } else if (lowerName.endsWith(".bmp")) {
+            contentType = "image/bmp";
+        } else {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "不支持的文件类型");
+            return;
+        }
+
+        resp.setContentType(contentType);
+        resp.setHeader("Cache-Control", "public, max-age=86400");
+        resp.setHeader("X-Content-Type-Options", "nosniff");
+
+        Files.copy(targetFile.toPath(), resp.getOutputStream());
+    }
+
+    /**
+     * 安全校验文件名：拒绝路径分隔符、空字节、相对路径片段。
+     * 允许中文等 Unicode 字符（用户上传的文件可能包含中文）。
+     */
+    private boolean isSafeFileName(String name) {
+        if (name == null || name.isEmpty()) return false;
+        if (name.equals(".") || name.equals("..")) return false;
+        if (name.indexOf('/') >= 0 || name.indexOf('\\') >= 0) return false;
+        if (name.indexOf('\0') >= 0) return false;
+        return true;
     }
 }

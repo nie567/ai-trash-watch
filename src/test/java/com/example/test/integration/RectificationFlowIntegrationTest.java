@@ -31,7 +31,7 @@ public class RectificationFlowIntegrationTest extends BaseTest {
         truncateTable("garbage_record");
         truncateTable("garbage_rule");
         executeSQL("INSERT IGNORE INTO user (id, username, password_hash, role, status) VALUES " +
-                "(1, 'flowuser', 'hash1', 'user', 1)");
+                "(9001, 'flowuser', 'hash1', 'user', 1)");
         executeSQL("INSERT INTO garbage_rule (class_name, mapped_category, description, status) VALUES " +
                 "('METAL', '可回收物', '金属制品', 1), " +
                 "('BIODEGRADABLE', '厨余垃圾', '可生物降解', 1)");
@@ -46,18 +46,18 @@ public class RectificationFlowIntegrationTest extends BaseTest {
         dto.setSelectedCategory("其他垃圾");
         dto.setIsMixed(0);
 
-        Long recordId = recordService.saveRecord(1L, dto);
+        Long recordId = recordService.saveRecord(9001L, dto);
         assertNotNull("1. 保存投放记录", recordId);
 
         GarbageRecord record = recordDAO.findById(recordId);
         assertEquals("2. 应判定为错误投放", Integer.valueOf(0), record.getIsCorrect());
 
-        List<ViolationRecord> violations = violationDAO.findByUserId(1L, 0, 10);
+        List<ViolationRecord> violations = violationDAO.findByUserId(9001L, 0, 10);
         assertEquals("3. 应自动生成1条违规记录", 1, violations.size());
         ViolationRecord violation = violations.get(0);
         assertEquals(AppConstants.VIOLATION_STATUS_PENDING, violation.getStatus());
 
-        Long taskId = rectService.createTask(violation.getId(), 1L, "请重新分类投放", "2026-05-01");
+        Long taskId = rectService.createTask(violation.getId(), 9001L, "请重新分类投放", "2026-05-01");
         assertNotNull("4. 创建整改任务", taskId);
 
         RectificationTask task = taskDAO.findById(taskId);
@@ -84,21 +84,21 @@ public class RectificationFlowIntegrationTest extends BaseTest {
         dto.setSelectedCategory("其他垃圾");
         dto.setIsMixed(0);
 
-        Long recordId = recordService.saveRecord(1L, dto);
+        Long recordId = recordService.saveRecord(9001L, dto);
         assertNotNull(recordId);
 
-        List<ViolationRecord> violations = violationDAO.findByUserId(1L, 0, 10);
+        List<ViolationRecord> violations = violationDAO.findByUserId(9001L, 0, 10);
         assertFalse(violations.isEmpty());
         ViolationRecord violation = violations.get(violations.size() - 1);
 
-        Long taskId = rectService.createTask(violation.getId(), 1L, "参加培训", "2026-05-01");
+        Long taskId = rectService.createTask(violation.getId(), 9001L, "参加培训", "2026-05-01");
         rectService.submitRectification(taskId, "已完成培训", null);
         rectService.reviewTask(taskId, AppConstants.RECT_STATUS_REJECTED, "整改不充分，请重新整改");
 
         RectificationTask task = taskDAO.findById(taskId);
         assertEquals(AppConstants.RECT_STATUS_REJECTED, task.getStatus());
 
-        Long newTaskId = rectService.createTask(violation.getId(), 1L, "请再次整改", "2026-05-15");
+        Long newTaskId = rectService.createTask(violation.getId(), 9001L, "请再次整改", "2026-05-15");
         assertNotNull("被拒绝后应能创建新整改任务", newTaskId);
     }
 
@@ -111,7 +111,7 @@ public class RectificationFlowIntegrationTest extends BaseTest {
         dto.setSelectedCategory("其他垃圾");
         dto.setIsMixed(0);
 
-        Long recordId = recordService.saveRecord(1L, dto);
+        Long recordId = recordService.saveRecord(9001L, dto);
 
         ViolationRecord violation = violationDAO.findByRecordId(recordId);
         assertNotNull("应有违规记录", violation);
@@ -134,12 +134,12 @@ public class RectificationFlowIntegrationTest extends BaseTest {
         dto.setSelectedCategory("其他垃圾");
         dto.setIsMixed(0);
 
-        Long recordId = recordService.saveRecord(1L, dto);
+        Long recordId = recordService.saveRecord(9001L, dto);
 
         ViolationRecord violation = violationDAO.findByRecordId(recordId);
         assertNotNull(violation);
 
-        Long taskId = rectService.createTask(violation.getId(), 1L, "整改", "2026-05-01");
+        Long taskId = rectService.createTask(violation.getId(), 9001L, "整改", "2026-05-01");
         assertNotNull(taskId);
 
         recordService.deleteRecord(recordId);
@@ -158,7 +158,7 @@ public class RectificationFlowIntegrationTest extends BaseTest {
         dto.setSelectedCategory("可回收物");
         dto.setIsMixed(0);
 
-        Long recordId = recordService.saveRecord(1L, dto);
+        Long recordId = recordService.saveRecord(9001L, dto);
         assertNotNull(recordId);
 
         GarbageRecord record = recordDAO.findById(recordId);

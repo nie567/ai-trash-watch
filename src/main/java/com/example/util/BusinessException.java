@@ -35,7 +35,7 @@ public class BusinessException extends RuntimeException {
         return code;
     }
 
-    public void setCode(int code) {
+    private void setCode(int code) {
         this.code = code;
     }
 }

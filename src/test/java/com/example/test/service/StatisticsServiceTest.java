@@ -21,11 +21,11 @@ public class StatisticsServiceTest extends BaseTest {
     protected void initTestData() throws SQLException {
         truncateTable("garbage_record");
         executeSQL("INSERT IGNORE INTO user (id, username, password_hash, role, status) VALUES " +
-                "(1, 'ssuser1', 'hash1', 'user', 1)");
+                "(9001, 'ssuser1', 'hash1', 'user', 1)");
         executeSQL("INSERT INTO garbage_record (user_id, image_name, image_path, recommended_category, selected_category, is_correct, status, create_time) VALUES " +
-                "(1, 'a.jpg', '/a.jpg', '可回收物', '可回收物', 1, 'REVIEWED', NOW()), " +
-                "(1, 'b.jpg', '/b.jpg', '厨余垃圾', '其他垃圾', 0, 'REVIEWED', NOW()), " +
-                "(1, 'c.jpg', '/c.jpg', '有害垃圾', '有害垃圾', 1, 'REVIEWED', NOW())");
+                "(9001, 'a.jpg', '/a.jpg', '可回收物', '可回收物', 1, 'REVIEWED', NOW()), " +
+                "(9001, 'b.jpg', '/b.jpg', '厨余垃圾', '其他垃圾', 0, 'REVIEWED', NOW()), " +
+                "(9001, 'c.jpg', '/c.jpg', '有害垃圾', '有害垃圾', 1, 'REVIEWED', NOW())");
     }
 
     @Test

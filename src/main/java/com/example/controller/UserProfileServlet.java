@@ -3,6 +3,7 @@ package com.example.controller;
 import com.example.model.User;
 import com.example.service.UserService;
 import com.example.util.AppConstants;
+import com.example.util.AppContext;
 import com.example.util.BusinessException;
 
 import jakarta.servlet.ServletException;
@@ -12,6 +13,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 用户个人中心控制器
@@ -22,6 +25,8 @@ import java.io.IOException;
     "/user/password"
 })
 public class UserProfileServlet extends HttpServlet {
+    private static final Logger logger = LoggerFactory.getLogger(UserProfileServlet.class);
+
     
     private static final long serialVersionUID = 1L;
     
@@ -29,7 +34,7 @@ public class UserProfileServlet extends HttpServlet {
     
     @Override
     public void init() throws ServletException {
-        userService = new UserService();
+        userService = AppContext.get().getUserService();
     }
     
     @Override
@@ -86,7 +91,7 @@ public class UserProfileServlet extends HttpServlet {
             throws ServletException, IOException {
         
         HttpSession session = request.getSession();
-        User loginUser = (User) session.getAttribute(AppConstants.SESSION_LOGIN_USER);
+        User loginUser = (User) session.getAttribute(AppConstants.SESSION_USER);
         
         // 重新从数据库获取最新数据
         User user = userService.getUserById(loginUser.getId());
@@ -102,7 +107,7 @@ public class UserProfileServlet extends HttpServlet {
             throws ServletException, IOException {
         
         HttpSession session = request.getSession();
-        User loginUser = (User) session.getAttribute(AppConstants.SESSION_LOGIN_USER);
+        User loginUser = (User) session.getAttribute(AppConstants.SESSION_USER);
         
         User user = userService.getUserById(loginUser.getId());
         request.setAttribute("user", user);
@@ -125,7 +130,7 @@ public class UserProfileServlet extends HttpServlet {
             throws ServletException, IOException {
         
         HttpSession session = request.getSession();
-        User loginUser = (User) session.getAttribute(AppConstants.SESSION_LOGIN_USER);
+        User loginUser = (User) session.getAttribute(AppConstants.SESSION_USER);
         
         String email = request.getParameter("email");
         String phone = request.getParameter("phone");
@@ -134,10 +139,16 @@ public class UserProfileServlet extends HttpServlet {
         
         // 更新Session中的用户信息
         User updatedUser = userService.getUserById(loginUser.getId());
-        session.setAttribute(AppConstants.SESSION_LOGIN_USER, updatedUser);
+        session.setAttribute(AppConstants.SESSION_USER, updatedUser);
         
-        // PRG模式
-        response.sendRedirect(request.getContextPath() + "/user/profile?success=updated");
+        // AJAX 请求返回 JSON，传统请求 302 重定向
+        if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":200,\"message\":\"个人资料更新成功\"}");
+        } else {
+            // PRG模式
+            response.sendRedirect(request.getContextPath() + "/user/profile?success=updated");
+        }
     }
     
     /**
@@ -147,7 +158,7 @@ public class UserProfileServlet extends HttpServlet {
             throws ServletException, IOException {
         
         HttpSession session = request.getSession();
-        User loginUser = (User) session.getAttribute(AppConstants.SESSION_LOGIN_USER);
+        User loginUser = (User) session.getAttribute(AppConstants.SESSION_USER);
         
         String oldPassword = request.getParameter("oldPassword");
         String newPassword = request.getParameter("newPassword");
@@ -158,24 +169,36 @@ public class UserProfileServlet extends HttpServlet {
             throw new BusinessException(400, "两次输入的新密码不一致");
         }
         
-        // 验证密码强度（简单校验）
-        if (newPassword.length() < 6) {
-            throw new BusinessException(400, "新密码长度不能少于6位");
+        // 验证密码强度（与 BCryptUtil.checkStrength 保持一致）
+        if (newPassword.length() < 8) {
+            throw new BusinessException(400, "新密码长度不能少于8位");
         }
         
         userService.changePassword(loginUser.getId(), oldPassword, newPassword);
         
-        // PRG模式
-        response.sendRedirect(request.getContextPath() + "/user/password?success=changed");
+        // AJAX 请求返回 JSON，传统请求 302 重定向
+        if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":200,\"message\":\"密码修改成功\"}");
+        } else {
+            // PRG模式
+            response.sendRedirect(request.getContextPath() + "/user/password?success=changed");
+        }
     }
     
     /**
-     * 处理业务异常
+     * 处理业务异常 — AJAX 请求返回 JSON，传统请求 forward 到 JSP
      */
     private void handleBusinessException(HttpServletRequest request, HttpServletResponse response,
             BusinessException e) throws ServletException, IOException {
+        if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.setStatus(e.getCode() >= 400 && e.getCode() < 500 ? e.getCode() : 400);
+            response.getWriter().write("{\"code\":" + e.getCode() + ",\"message\":\"" + e.getMessage().replace("\"", "\\\"") + "\"}");
+            return;
+        }
         HttpSession session = request.getSession();
-        User loginUser = (User) session.getAttribute(AppConstants.SESSION_LOGIN_USER);
+        User loginUser = (User) session.getAttribute(AppConstants.SESSION_USER);
         request.setAttribute(AppConstants.REQUEST_ERROR, e.getMessage());
         request.setAttribute("user", userService.getUserById(loginUser.getId()));
         
@@ -192,7 +215,7 @@ public class UserProfileServlet extends HttpServlet {
      */
     private void handleException(HttpServletRequest request, HttpServletResponse response, Exception e)
             throws ServletException, IOException {
-        e.printStackTrace();
+        logger.error("unexpected error", e);
         request.setAttribute(AppConstants.REQUEST_ERROR, "系统错误: " + e.getMessage());
         request.getRequestDispatcher("/WEB-INF/jsp/error/500.jsp").forward(request, response);
     }

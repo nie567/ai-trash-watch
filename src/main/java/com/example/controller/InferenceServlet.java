@@ -3,8 +3,11 @@ package com.example.controller;
 import com.example.service.DjlInferenceClient;
 import com.example.service.InferenceResult;
 import com.example.service.RuleService;
+import com.example.util.AppConfig;
+import com.example.util.AppContext;
 import com.example.util.AppConstants;
 import com.example.util.Result;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,6 +22,9 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.concurrent.Semaphore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 垃圾分类推理控制器
@@ -33,20 +39,24 @@ import java.util.*;
     maxRequestSize = 20 * 1024 * 1024
 )
 public class InferenceServlet extends HttpServlet {
+    private static final Logger logger = LoggerFactory.getLogger(InferenceServlet.class);
+    private static final Semaphore inferenceSemaphore = new Semaphore(3);
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
 
     private static final List<String> IMAGE_EXTENSIONS = Arrays.asList(".jpg", ".jpeg", ".png", ".bmp", ".gif");
     private RuleService ruleService;
 
     @Override
     public void init() throws ServletException {
-        ruleService = new RuleService();
+        ruleService = AppContext.get().getRuleService();
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         // 列出 input 目录下的所有图片文件
-        List<String> imageFiles = listImageFiles(AppConstants.DJL_INPUT_DIR);
+        List<String> imageFiles = listImageFiles(AppConfig.getDjlInputDir());
         req.setAttribute("imageFiles", imageFiles);
         req.getRequestDispatcher("/WEB-INF/jsp/user/garbage-upload.jsp").forward(req, resp);
     }
@@ -77,10 +87,14 @@ public class InferenceServlet extends HttpServlet {
     private void doDetect(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         PrintWriter out = resp.getWriter();
 
+        if (!inferenceSemaphore.tryAcquire()) {
+            out.write(Result.error(429, "推理服务繁忙，请稍后重试").toJson());
+            return;
+        }
+
         String fileName = null;
         boolean isUploadedFile = false;
 
-        // 尝试获取上传的文件
         try {
             Part filePart = req.getPart("file");
             if (filePart != null && filePart.getSize() > 0) {
@@ -91,7 +105,7 @@ public class InferenceServlet extends HttpServlet {
                 }
                 // 确保文件名唯一
                 fileName = generateUniqueFileName(originalName);
-                File targetFile = new File(AppConstants.DJL_INPUT_DIR, fileName);
+                File targetFile = new File(AppConfig.getDjlInputDir(), fileName);
                 try (InputStream is = filePart.getInputStream()) {
                     Files.copy(is, targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
@@ -111,7 +125,7 @@ public class InferenceServlet extends HttpServlet {
             fileName = fileName.trim();
 
             // 检查文件是否存在于 input 目录
-            File inputFile = new File(AppConstants.DJL_INPUT_DIR, fileName);
+            File inputFile = new File(AppConfig.getDjlInputDir(), fileName);
             if (!inputFile.exists() || !inputFile.isFile()) {
                 out.write(Result.error("图片文件不存在: " + fileName).toJson());
                 return;
@@ -162,35 +176,37 @@ public class InferenceServlet extends HttpServlet {
                 }
             }
 
-            // 构建扩展结果JSON
-            StringBuilder json = new StringBuilder();
-            json.append("{\"code\":200,\"message\":\"\",\"data\":{");
-            json.append("\"success\":true,");
-            json.append("\"imageName\":\"").append(escapeJson(fileName)).append("\",");
-            json.append("\"outputImageName\":\"").append(outputImageFileName != null ? escapeJson(outputImageFileName) : "").append("\",");
-            json.append("\"recommendedCategory\":\"").append(recommendedCategory != null ? escapeJson(recommendedCategory) : "").append("\",");
-            json.append("\"isMixed\":").append(isMixed).append(",");
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("success", true);
+            data.put("imageName", fileName);
+            data.put("outputImageName", outputImageFileName);
+            data.put("recommendedCategory", recommendedCategory);
+            data.put("isMixed", isMixed);
 
-            // 检测对象列表（含mappedCategory）
-            json.append("\"detectedObjects\":[");
+            List<Map<String, Object>> detectedList = new ArrayList<>();
             if (result.getDetectedObjects() != null) {
-                for (int i = 0; i < result.getDetectedObjects().size(); i++) {
-                    InferenceResult.DetectedObject obj = result.getDetectedObjects().get(i);
+                for (InferenceResult.DetectedObject obj : result.getDetectedObjects()) {
                     String mappedCat = ruleService.mapCategory(obj.getClassName());
-                    if (i > 0) json.append(",");
-                    json.append("{");
-                    json.append("\"className\":\"").append(escapeJson(obj.getClassName())).append("\",");
-                    json.append("\"confidence\":").append(obj.getConfidence()).append(",");
-                    json.append("\"mappedCategory\":\"").append(mappedCat != null ? escapeJson(mappedCat) : "").append("\"");
-                    json.append("}");
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("className", obj.getClassName());
+                    item.put("confidence", obj.getConfidence());
+                    item.put("mappedCategory", mappedCat);
+                    detectedList.add(item);
                 }
             }
-            json.append("]}}");
+            data.put("detectedObjects", detectedList);
 
-            out.write(json.toString());
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("code", 200);
+            response.put("message", "");
+            response.put("data", data);
+
+            out.write(objectMapper.writeValueAsString(response));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("unexpected error", e);
             out.write(Result.error("检测服务暂不可用，请稍后重试").toJson());
+        } finally {
+            inferenceSemaphore.release();
         }
     }
 
@@ -213,15 +229,6 @@ public class InferenceServlet extends HttpServlet {
             return System.currentTimeMillis() + "_" + originalName.substring(0, dotIdx) + originalName.substring(dotIdx);
         }
         return System.currentTimeMillis() + "_" + originalName;
-    }
-
-    private String escapeJson(String s) {
-        if (s == null) return "";
-        return s.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
     }
 
     private List<String> listImageFiles(String dirPath) {

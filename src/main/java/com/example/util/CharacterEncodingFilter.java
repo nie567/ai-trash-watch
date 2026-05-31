@@ -25,9 +25,9 @@ public class CharacterEncodingFilter implements Filter {
             throws IOException, ServletException {
         // 设置请求编码
         request.setCharacterEncoding(encoding);
-        // 设置响应编码，但不覆盖已有的 Content-Type
+        // 设置响应编码（不强制设contentType，避免覆盖CSS等静态资源的正确MIME类型）
         response.setCharacterEncoding(encoding);
-        
+
         chain.doFilter(request, response);
     }
     

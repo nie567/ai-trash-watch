@@ -20,6 +20,17 @@
                 <div class="alert alert-error">${error}</div>
             </c:if>
 
+            <div class="toolbar">
+                <form class="search-form" method="get" action="${pageContext.request.contextPath}/user/garbage-record/list">
+                    <select name="status" class="search-input" style="width:150px;">
+                        <option value="">全部状态</option>
+                        <option value="PENDING" ${param.status == 'PENDING' ? 'selected' : ''}>待复核</option>
+                        <option value="REVIEWED" ${param.status == 'REVIEWED' ? 'selected' : ''}>已复核</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">筛选</button>
+                </form>
+            </div>
+
             <table class="table">
                 <thead>
                     <tr>
@@ -34,37 +45,53 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <c:forEach items="${pageResult.data}" var="record">
+                    <c:forEach items="${pageResult.data}" var="r">
                         <tr>
-                            <td><fmt:formatDate value="${record.createTime}" pattern="MM-dd HH:mm"/></td>
-                            <td>${record.imageName}</td>
-                            <td>${record.detectedSummary}</td>
-                            <td><span class="badge ${record.recommendedCategory == '可回收物' ? 'category-recyclable' : record.recommendedCategory == '厨余垃圾' ? 'category-kitchen' : record.recommendedCategory == '有害垃圾' ? 'category-hazardous' : record.recommendedCategory == '其他垃圾' ? 'category-other' : 'category-mixed'}">${record.recommendedCategory}</span></td>
-                            <td><span class="badge ${record.selectedCategory == '可回收物' ? 'category-recyclable' : record.selectedCategory == '厨余垃圾' ? 'category-kitchen' : record.selectedCategory == '有害垃圾' ? 'category-hazardous' : record.selectedCategory == '其他垃圾' ? 'category-other' : 'category-mixed'}">${record.selectedCategory}</span></td>
-                            <td>${record.isCorrect == 1 ? '<span class="text-success">正确</span>' : '<span class="text-danger">错误</span>'}</td>
-                            <td><span class="badge ${record.status == 'PENDING' ? 'badge-pending' : 'badge-reviewed'}">${record.status == 'PENDING' ? '待复核' : '已复核'}</span></td>
-                            <td><a href="${pageContext.request.contextPath}/user/garbage-record/detail?id=${record.id}" class="btn btn-small btn-primary">详情</a></td>
+                            <td><fmt:formatDate value="${r.createTime}" pattern="MM-dd HH:mm"/></td>
+                            <td>
+                                <c:if test="${not empty r.imageName}">
+                                    <img data-src="${pageContext.request.contextPath}/image/input/${r.imageName}"
+                                         alt="" style="width:60px;height:45px;object-fit:cover;border-radius:6px;background:rgba(255,255,255,0.06);">
+                                </c:if>
+                            </td>
+                            <td>${r.detectedSummary}</td>
+                            <td><span class="badge ${r.recommendedCategory == '可回收物' ? 'category-recyclable' : r.recommendedCategory == '厨余垃圾' ? 'category-kitchen' : r.recommendedCategory == '有害垃圾' ? 'category-hazardous' : r.recommendedCategory == '其他垃圾' ? 'category-other' : 'category-mixed'}">${r.recommendedCategory}</span></td>
+                            <td><span class="badge ${r.selectedCategory == '可回收物' ? 'category-recyclable' : r.selectedCategory == '厨余垃圾' ? 'category-kitchen' : r.selectedCategory == '有害垃圾' ? 'category-hazardous' : r.selectedCategory == '其他垃圾' ? 'category-other' : 'category-mixed'}">${r.selectedCategory}</span></td>
+                            <td>${r.isCorrect == 1 ? '✓' : '✗'}</td>
+                            <td><span class="badge ${r.status == 'PENDING' ? 'badge-pending' : 'badge-rectified'}">${r.status == 'PENDING' ? '待复核' : '已复核'}</span></td>
+                            <td><a href="${pageContext.request.contextPath}/user/garbage-record/detail?id=${r.id}" class="btn btn-small btn-primary">详情</a></td>
                         </tr>
                     </c:forEach>
-                    <c:if test="${empty pageResult.data}">
-                        <tr><td colspan="8" class="text-center text-muted">暂无投放记录</td></tr>
-                    </c:if>
                 </tbody>
             </table>
 
-            <!-- 分页 -->
             <c:if test="${pageResult.totalPages > 1}">
                 <div class="pagination">
                     <c:if test="${pageResult.page > 1}">
-                        <a href="?page=${pageResult.page - 1}">上一页</a>
+                        <a href="?page=${pageResult.page - 1}&status=${param.status}">上一页</a>
                     </c:if>
                     <span class="active">${pageResult.page} / ${pageResult.totalPages}</span>
                     <c:if test="${pageResult.page < pageResult.totalPages}">
-                        <a href="?page=${pageResult.page + 1}">下一页</a>
+                        <a href="?page=${pageResult.page + 1}&status=${param.status}">下一页</a>
                     </c:if>
                 </div>
             </c:if>
         </div>
     </div>
+
+<script>
+window._pageConfig = {
+    contextPath: '${pageContext.request.contextPath}',
+    csrfToken: '${sessionScope._csrfToken}'
+};
+</script>
+<script src="${pageContext.request.contextPath}/js/common.js"></script>
+<script>
+(function() {
+    'use strict';
+    initAjaxPagination({ containerSelector: '.card', paginationSelector: '.pagination' });
+    initLazyLoad();
+})();
+</script>
 </body>
 </html>

@@ -27,18 +27,18 @@
 
             <!-- 已提交的整改信息 -->
             <c:if test="${not empty task.submitDesc}">
-                <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;">
+                <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);">
                     <h4 style="margin-bottom:12px;">整改提交</h4>
                     <div class="info-grid">
                         <div class="info-item"><span class="info-label">整改说明：</span><span class="info-value">${task.submitDesc}</span></div>
-                        <div class="info-item"><span class="info-label">整改图片：</span><span class="info-value">${empty task.submitImagePath ? '无' : task.submitImagePath}</span></div>
+                        <div class="info-item"><span class="info-label">整改图片：</span><span class="info-value"><c:choose><c:when test="${not empty task.submitImagePath}"><img src="${pageContext.request.contextPath}/image/${task.submitImagePath}" alt="整改图片" style="max-width:300px;max-height:200px;border-radius:6px;cursor:pointer;" onclick="window.open(this.src)"></c:when><c:otherwise>无</c:otherwise></c:choose></span></div>
                     </div>
                 </div>
             </c:if>
 
             <!-- 复核结果 -->
             <c:if test="${not empty task.reviewResult}">
-                <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;">
+                <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);">
                     <h4 style="margin-bottom:12px;">复核结果</h4>
                     <div class="info-grid">
                         <div class="info-item"><span class="info-label">复核结果：</span><span class="info-value"><span class="badge badge-${task.reviewResult eq 'APPROVED' ? 'approved' : 'rejected'}">${task.reviewResult == 'APPROVED' ? '通过' : '驳回'}</span></span></div>
@@ -57,8 +57,16 @@
                     <textarea id="submitDesc" rows="4" placeholder="请详细描述您的整改情况"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>整改图片路径（可选）</label>
-                    <input type="text" id="submitImagePath" placeholder="整改图片文件路径">
+                    <label>整改图片（可选）</label>
+                    <div class="upload-area" id="rectUploadArea" onclick="document.getElementById('rectFileInput').click()" style="padding:20px;text-align:center;cursor:pointer;border:2px dashed rgba(255,255,255,0.2);border-radius:8px;min-height:80px;position:relative;">
+                        <div id="rectUploadPlaceholder">
+                            <div style="font-size:28px;">&#128247;</div>
+                            <p style="margin:4px 0;">点击选择整改图片</p>
+                            <p class="text-muted" style="font-size:14px;">支持 jpg/png/gif 格式，最大10MB</p>
+                        </div>
+                        <img id="rectPreviewImg" src="" alt="" style="max-width:100%;max-height:200px;display:none;border-radius:6px;">
+                        <input type="file" id="rectFileInput" accept=".jpg,.jpeg,.png,.gif" style="display:none" onchange="onRectFileSelected(this)">
+                    </div>
                 </div>
                 <button class="btn btn-success" onclick="doSubmit()">提交整改</button>
                 <span id="submitStatus" style="margin-left:10px;"></span>
@@ -71,26 +79,13 @@
     </div>
 
 <script>
-function doSubmit() {
-    var desc = document.getElementById('submitDesc').value;
-    if (!desc.trim()) { alert('请输入整改说明'); return; }
-    var imagePath = document.getElementById('submitImagePath').value;
-    var params = 'id=${task.id}&submitDesc=' + encodeURIComponent(desc) + '&submitImagePath=' + encodeURIComponent(imagePath);
-    fetch('${pageContext.request.contextPath}/user/rectification/submit', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: params
-    }).then(r => r.json()).then(data => {
-        if (data.code === 200) {
-            document.getElementById('submitStatus').innerHTML = '<span class="text-success">提交成功</span>';
-            setTimeout(function(){ location.reload(); }, 1000);
-        } else {
-            document.getElementById('submitStatus').innerHTML = '<span class="text-danger">' + (data.message || '提交失败') + '</span>';
-        }
-    }).catch(err => {
-        document.getElementById('submitStatus').innerHTML = '<span class="text-danger">提交失败</span>';
-    });
-}
+window._pageConfig = {
+    contextPath: '${pageContext.request.contextPath}',
+    csrfToken: '${sessionScope._csrfToken}',
+    taskId: parseInt('${task.id}') || 0
+};
 </script>
+<script src="${pageContext.request.contextPath}/js/common.js"></script>
+<script src="${pageContext.request.contextPath}/js/rectification-detail.js"></script>
 </body>
 </html>

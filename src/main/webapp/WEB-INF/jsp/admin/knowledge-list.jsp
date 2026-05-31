@@ -84,63 +84,12 @@
     </div>
 
 <script>
-var contextPath = '${pageContext.request.contextPath}';
-
-function showKbModal() {
-    document.getElementById('kbModalTitle').textContent = '新增知识条目';
-    document.getElementById('kbId').value = '';
-    document.getElementById('kbTitle').value = '';
-    document.getElementById('kbGarbageType').value = '可回收物';
-    document.getElementById('kbContent').value = '';
-    document.getElementById('kbImagePath').value = '';
-    document.getElementById('kbModal').classList.add('show');
-}
-
-function editKb(id, title, garbageType, content) {
-    document.getElementById('kbModalTitle').textContent = '编辑知识条目';
-    document.getElementById('kbId').value = id;
-    document.getElementById('kbTitle').value = title;
-    document.getElementById('kbGarbageType').value = garbageType;
-    document.getElementById('kbContent').value = content;
-    document.getElementById('kbModal').classList.add('show');
-}
-
-function closeKbModal() {
-    document.getElementById('kbModal').classList.remove('show');
-}
-
-function saveKb() {
-    var id = document.getElementById('kbId').value;
-    var title = document.getElementById('kbTitle').value;
-    var garbageType = document.getElementById('kbGarbageType').value;
-    var content = document.getElementById('kbContent').value;
-    var imagePath = document.getElementById('kbImagePath').value;
-    if (!title.trim()) { alert('请输入标题'); return; }
-
-    var params = 'title=' + encodeURIComponent(title) + '&garbageType=' + encodeURIComponent(garbageType) + '&content=' + encodeURIComponent(content) + '&imagePath=' + encodeURIComponent(imagePath);
-    if (id) params += '&id=' + id;
-
-    fetch(contextPath + '/admin/knowledge/save', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: params
-    }).then(r => r.json()).then(data => {
-        if (data.code === 200) { closeKbModal(); location.reload(); }
-        else { alert(data.message || '保存失败'); }
-    }).catch(err => { alert('操作失败'); });
-}
-
-function deleteKb(id) {
-    if (!confirm('确定删除该知识条目？')) return;
-    fetch(contextPath + '/admin/knowledge/delete', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'id=' + id
-    }).then(r => r.json()).then(data => {
-        if (data.code === 200) { location.reload(); }
-        else { alert(data.message || '删除失败'); }
-    }).catch(err => { alert('操作失败'); });
-}
+window._pageConfig = {
+    contextPath: '${pageContext.request.contextPath}',
+    csrfToken: '${sessionScope._csrfToken}'
+};
 </script>
+<script src="${pageContext.request.contextPath}/js/common.js"></script>
+<script src="${pageContext.request.contextPath}/js/knowledge-list.js"></script>
 </body>
 </html>

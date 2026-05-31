@@ -28,16 +28,16 @@ public class RectificationServiceTest extends BaseTest {
         truncateTable("violation_record");
         truncateTable("garbage_record");
         executeSQL("INSERT IGNORE INTO user (id, username, password_hash, role, status) VALUES " +
-                "(1, 'rectuser1', 'hash1', 'user', 1)");
+                "(9001, 'rectuser1', 'hash1', 'user', 1)");
         executeSQL("INSERT INTO garbage_record (id, user_id, image_name, image_path, recommended_category, selected_category, is_correct, status) VALUES " +
-                "(100, 1, 'a.jpg', '/a.jpg', '可回收物', '其他垃圾', 0, 'PENDING')");
+                "(100, 9001, 'a.jpg', '/a.jpg', '可回收物', '其他垃圾', 0, 'PENDING')");
         executeSQL("INSERT INTO violation_record (id, record_id, user_id, violation_type, description, level, status, create_time) VALUES " +
-                "(200, 100, 1, '分类错误', '测试违规', 'LOW', 'PENDING', NOW())");
+                "(200, 100, 9001, '分类错误', '测试违规', 'LOW', 'PENDING', NOW())");
     }
 
     @Test
     public void testCreateTask() {
-        Long taskId = rectService.createTask(200L, 1L, "请重新分类投放", "2026-05-01");
+        Long taskId = rectService.createTask(200L, 9001L, "请重新分类投放", "2026-05-01");
         assertNotNull("创建任务应返回ID", taskId);
 
         RectificationTask task = taskDAO.findById(taskId);
@@ -49,7 +49,7 @@ public class RectificationServiceTest extends BaseTest {
     @Test
     public void testCreateTaskNullViolationId() {
         try {
-            rectService.createTask(null, 1L, "要求", "2026-05-01");
+            rectService.createTask(null, 9001L, "要求", "2026-05-01");
             fail("应抛出BusinessException");
         } catch (BusinessException e) {
             assertEquals(400, e.getCode());
@@ -59,7 +59,7 @@ public class RectificationServiceTest extends BaseTest {
     @Test
     public void testCreateTaskEmptyRequirement() {
         try {
-            rectService.createTask(200L, 1L, "", "2026-05-01");
+            rectService.createTask(200L, 9001L, "", "2026-05-01");
             fail("应抛出BusinessException");
         } catch (BusinessException e) {
             assertEquals(400, e.getCode());
@@ -69,7 +69,7 @@ public class RectificationServiceTest extends BaseTest {
     @Test
     public void testCreateTaskNonExistentViolation() {
         try {
-            rectService.createTask(99999L, 1L, "要求", "2026-05-01");
+            rectService.createTask(99999L, 9001L, "要求", "2026-05-01");
             fail("应抛出BusinessException");
         } catch (BusinessException e) {
             assertEquals(404, e.getCode());
@@ -78,10 +78,10 @@ public class RectificationServiceTest extends BaseTest {
 
     @Test
     public void testCreateDuplicateTask() {
-        rectService.createTask(200L, 1L, "第一次要求", "2026-05-01");
+        rectService.createTask(200L, 9001L, "第一次要求", "2026-05-01");
 
         try {
-            rectService.createTask(200L, 1L, "重复要求", "2026-05-01");
+            rectService.createTask(200L, 9001L, "重复要求", "2026-05-01");
             fail("已有未完成任务时应抛出异常");
         } catch (BusinessException e) {
             assertEquals(400, e.getCode());
@@ -90,7 +90,7 @@ public class RectificationServiceTest extends BaseTest {
 
     @Test
     public void testSubmitRectification() {
-        Long taskId = rectService.createTask(200L, 1L, "要求", "2026-05-01");
+        Long taskId = rectService.createTask(200L, 9001L, "要求", "2026-05-01");
         assertNotNull(taskId);
 
         rectService.submitRectification(taskId, "已完成整改", "/output/rect.jpg");
@@ -112,7 +112,7 @@ public class RectificationServiceTest extends BaseTest {
 
     @Test
     public void testSubmitEmptyDesc() {
-        Long taskId = rectService.createTask(200L, 1L, "要求", "2026-05-01");
+        Long taskId = rectService.createTask(200L, 9001L, "要求", "2026-05-01");
         try {
             rectService.submitRectification(taskId, "", null);
             fail("应抛出BusinessException");
@@ -123,7 +123,7 @@ public class RectificationServiceTest extends BaseTest {
 
     @Test
     public void testReviewTaskApproved() {
-        Long taskId = rectService.createTask(200L, 1L, "要求", "2026-05-01");
+        Long taskId = rectService.createTask(200L, 9001L, "要求", "2026-05-01");
         rectService.submitRectification(taskId, "已完成", "/output/rect.jpg");
 
         rectService.reviewTask(taskId, AppConstants.RECT_STATUS_APPROVED, "通过");
@@ -138,7 +138,7 @@ public class RectificationServiceTest extends BaseTest {
 
     @Test
     public void testReviewTaskRejected() {
-        Long taskId = rectService.createTask(200L, 1L, "要求", "2026-05-01");
+        Long taskId = rectService.createTask(200L, 9001L, "要求", "2026-05-01");
         rectService.submitRectification(taskId, "已整改", "/output/rect.jpg");
 
         rectService.reviewTask(taskId, AppConstants.RECT_STATUS_REJECTED, "整改不充分");
@@ -149,7 +149,7 @@ public class RectificationServiceTest extends BaseTest {
 
     @Test
     public void testReviewNotSubmittedTask() {
-        Long taskId = rectService.createTask(200L, 1L, "要求", "2026-05-01");
+        Long taskId = rectService.createTask(200L, 9001L, "要求", "2026-05-01");
 
         try {
             rectService.reviewTask(taskId, AppConstants.RECT_STATUS_APPROVED, "通过");
@@ -161,7 +161,7 @@ public class RectificationServiceTest extends BaseTest {
 
     @Test
     public void testGetUserTasks() {
-        PageResult<RectificationTask> page = rectService.getUserTasks(1L, 1, 10);
+        PageResult<RectificationTask> page = rectService.getUserTasks(9001L, 1, 10);
         assertNotNull(page);
     }
 
@@ -173,7 +173,7 @@ public class RectificationServiceTest extends BaseTest {
 
     @Test
     public void testGetById() {
-        Long taskId = rectService.createTask(200L, 1L, "要求", "2026-05-01");
+        Long taskId = rectService.createTask(200L, 9001L, "要求", "2026-05-01");
         RectificationTask found = rectService.getById(taskId);
         assertNotNull(found);
 

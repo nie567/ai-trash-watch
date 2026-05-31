@@ -2,6 +2,7 @@ package com.example.controller;
 
 import com.example.model.KnowledgeBase;
 import com.example.service.KnowledgeService;
+import com.example.util.AppContext;
 import com.example.util.Result;
 
 import jakarta.servlet.ServletException;
@@ -12,6 +13,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 知识库控制器
@@ -19,12 +22,14 @@ import java.util.List;
  */
 @WebServlet({"/user/knowledge/*", "/admin/knowledge/*"})
 public class KnowledgeServlet extends HttpServlet {
+    private static final Logger logger = LoggerFactory.getLogger(KnowledgeServlet.class);
+
 
     private KnowledgeService knowledgeService;
 
     @Override
     public void init() throws ServletException {
-        knowledgeService = new KnowledgeService();
+        knowledgeService = AppContext.get().getKnowledgeService();
     }
 
     @Override
@@ -74,7 +79,7 @@ public class KnowledgeServlet extends HttpServlet {
                 knowledgeService.save(kb);
                 out.write(Result.success().toJson());
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("unexpected error", e);
                 out.write(Result.error(e.getMessage()).toJson());
             }
         } else if ("/delete".equals(pathInfo)) {
@@ -83,7 +88,7 @@ public class KnowledgeServlet extends HttpServlet {
                 knowledgeService.delete(id);
                 out.write(Result.success().toJson());
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("unexpected error", e);
                 out.write(Result.error(e.getMessage()).toJson());
             }
         } else {

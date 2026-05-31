@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Tomcat 专用 Web 上下文配置：
+  - 为所有 Cookie 设置 SameSite=Lax，配合 web.xml 的 HttpOnly 抵御 CSRF/XSS。
+  - 生产切 HTTPS 后把 web.xml 的 <secure> 调为 true。
+-->
+<Context reloadable="true" docBase="AI-TrashWatch">
+    <CookieProcessor className="org.apache.tomcat.util.http.Rfc6265CookieProcessor"
+                     sameSiteCookies="lax"/>
+</Context>

@@ -47,9 +47,10 @@ public class BusinessExceptionTest {
     }
 
     @Test
-    public void testSetCode() {
+    public void testSetCodeIsPrivate() {
         BusinessException e = new BusinessException();
-        e.setCode(403);
-        assertEquals(403, e.getCode());
+        assertEquals(500, e.getCode());
+        BusinessException e2 = new BusinessException(403, "forbidden");
+        assertEquals(403, e2.getCode());
     }
 }

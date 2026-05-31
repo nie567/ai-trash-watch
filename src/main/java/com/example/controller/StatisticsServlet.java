@@ -1,9 +1,9 @@
 package com.example.controller;
 
-import com.example.model.TrendVO;
 import com.example.model.TypeCountVO;
 import com.example.model.UserRankVO;
 import com.example.service.StatisticsService;
+import com.example.util.AppContext;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -11,8 +11,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 统计分析控制器
@@ -24,7 +23,7 @@ public class StatisticsServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        statisticsService = new StatisticsService();
+        statisticsService = AppContext.get().getStatisticsService();
     }
 
     @Override
@@ -39,13 +38,17 @@ public class StatisticsServlet extends HttpServlet {
         req.setAttribute("correctCount", correctAndWrong.getOrDefault("correct", 0));
         req.setAttribute("wrongCount", correctAndWrong.getOrDefault("wrong", 0));
 
-        // 近7天趋势
-        List<TrendVO> trends = statisticsService.countByDate(7);
-        req.setAttribute("trends", trends);
-
         // 违规排名
         List<UserRankVO> violationRank = statisticsService.getUserViolationRank();
         req.setAttribute("violationRank", violationRank);
+
+        // 违规类型分布
+        List<TypeCountVO> violationTypeCounts = statisticsService.countByViolationType();
+        req.setAttribute("violationTypeCounts", violationTypeCounts);
+
+        // 违规等级分布
+        List<TypeCountVO> violationLevelCounts = statisticsService.countByViolationLevel();
+        req.setAttribute("violationLevelCounts", violationLevelCounts);
 
         req.getRequestDispatcher("/WEB-INF/jsp/admin/statistics.jsp").forward(req, resp);
     }

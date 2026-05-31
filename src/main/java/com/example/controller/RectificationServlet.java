@@ -5,6 +5,7 @@ import com.example.model.RectificationTask;
 import com.example.model.User;
 import com.example.service.RectificationService;
 import com.example.util.AppConstants;
+import com.example.util.AppContext;
 import com.example.util.Result;
 
 import jakarta.servlet.ServletException;
@@ -15,17 +16,17 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+
 /**
  * 用户侧整改任务控制器
  */
 @WebServlet("/user/rectification/*")
 public class RectificationServlet extends HttpServlet {
-
     private RectificationService rectService;
 
     @Override
     public void init() throws ServletException {
-        rectService = new RectificationService();
+        rectService = AppContext.get().getRectificationService();
     }
 
     @Override
@@ -50,6 +51,18 @@ public class RectificationServlet extends HttpServlet {
         resp.setContentType("application/json;charset=UTF-8");
         PrintWriter out = resp.getWriter();
 
+        User loginUser = (User) req.getSession().getAttribute(AppConstants.SESSION_USER);
+        if (loginUser == null) {
+            out.write(Result.error(401, "未登录").toJson());
+            return;
+        }
+
+        // 管理员不能提交整改
+        if (loginUser.isAdmin()) {
+            out.write(Result.error(403, "管理员无整改任务").toJson());
+            return;
+        }
+
         String pathInfo = req.getPathInfo();
 
         // 提交整改
@@ -62,7 +75,6 @@ public class RectificationServlet extends HttpServlet {
                 rectService.submitRectification(id, submitDesc, submitImagePath);
                 out.write(Result.success().toJson());
             } catch (Exception e) {
-                e.printStackTrace();
                 out.write(Result.error(e.getMessage()).toJson());
             }
         } else {
@@ -72,23 +84,43 @@ public class RectificationServlet extends HttpServlet {
 
     private void showList(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        User loginUser = (User) req.getSession().getAttribute(AppConstants.SESSION_LOGIN_USER);
+        User loginUser = (User) req.getSession().getAttribute(AppConstants.SESSION_USER);
         if (loginUser == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        // 管理员无整改任务
+        if (loginUser.isAdmin()) {
+            req.setAttribute("pageResult", new PageResult<>(java.util.Collections.emptyList(), 0, 1, 10));
+            req.getRequestDispatcher("/WEB-INF/jsp/user/rectification-list.jsp").forward(req, resp);
             return;
         }
 
         int page = 1;
         int pageSize = AppConstants.DEFAULT_PAGE_SIZE;
         try { page = Integer.parseInt(req.getParameter("page")); } catch (Exception ignored) {}
+        String status = req.getParameter("status");
 
-        PageResult<RectificationTask> pageResult = rectService.getUserTasks(loginUser.getId().longValue(), page, pageSize);
+        PageResult<RectificationTask> pageResult = rectService.getUserTasks(loginUser.getId().longValue(), page, pageSize, status);
         req.setAttribute("pageResult", pageResult);
         req.getRequestDispatcher("/WEB-INF/jsp/user/rectification-list.jsp").forward(req, resp);
     }
 
     private void showDetail(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        User loginUser = (User) req.getSession().getAttribute(AppConstants.SESSION_USER);
+        if (loginUser == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        // 管理员无整改任务
+        if (loginUser.isAdmin()) {
+            resp.sendRedirect(req.getContextPath() + "/user/rectification/list");
+            return;
+        }
+
         Long id = null;
         try { id = Long.parseLong(req.getParameter("id")); } catch (Exception ignored) {}
 

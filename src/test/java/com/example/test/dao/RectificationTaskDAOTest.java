@@ -21,23 +21,23 @@ public class RectificationTaskDAOTest extends BaseTest {
         truncateTable("violation_record");
         truncateTable("garbage_record");
         executeSQL("INSERT IGNORE INTO user (id, username, password_hash, role, status) VALUES " +
-                "(1, 'testuser1', 'hash1', 'user', 1), " +
-                "(2, 'testuser2', 'hash2', 'user', 1)");
+                "(9001, 'testuser1', 'hash1', 'user', 1), " +
+                "(9002, 'testuser2', 'hash2', 'user', 1)");
         executeSQL("INSERT INTO garbage_record (id, user_id, image_name, image_path, recommended_category, selected_category, is_correct, status) VALUES " +
-                "(100, 1, 'test1.jpg', '/input/test1.jpg', '可回收物', '其他垃圾', 0, 'PENDING')");
+                "(100, 9001, 'test1.jpg', '/input/test1.jpg', '可回收物', '其他垃圾', 0, 'PENDING')");
         executeSQL("INSERT INTO violation_record (id, record_id, user_id, violation_type, description, level, status, create_time) VALUES " +
-                "(200, 100, 1, '分类错误', '测试违规', 'LOW', 'PENDING', NOW()), " +
-                "(201, 100, 2, '分类错误', '测试违规2', 'LOW', 'PENDING', NOW())");
+                "(200, 100, 9001, '分类错误', '测试违规', 'LOW', 'PENDING', NOW()), " +
+                "(201, 100, 9002, '分类错误', '测试违规2', 'LOW', 'PENDING', NOW())");
         executeSQL("INSERT INTO rectification_task (violation_id, user_id, requirement, deadline, status, create_time, update_time) VALUES " +
-                "(200, 1, '重新分类投放', '2026-05-01 00:00:00', 'PENDING', NOW(), NOW()), " +
-                "(201, 2, '参加培训', '2026-05-01 00:00:00', 'SUBMITTED', NOW(), NOW())");
+                "(200, 9001, '重新分类投放', '2026-05-01 00:00:00', 'PENDING', NOW(), NOW()), " +
+                "(201, 9002, '参加培训', '2026-05-01 00:00:00', 'SUBMITTED', NOW(), NOW())");
     }
 
     @Test
     public void testInsert() {
         RectificationTask task = new RectificationTask();
         task.setViolationId(200L);
-        task.setUserId(1L);
+        task.setUserId(9001L);
         task.setRequirement("整改要求");
         task.setDeadline(Timestamp.valueOf("2026-06-01 00:00:00"));
         task.setStatus("PENDING");
@@ -75,10 +75,10 @@ public class RectificationTaskDAOTest extends BaseTest {
 
     @Test
     public void testFindByUserId() {
-        List<RectificationTask> user1Tasks = taskDAO.findByUserId(1L, 0, 10);
+        List<RectificationTask> user1Tasks = taskDAO.findByUserId(9001L, 0, 10);
         assertEquals(1, user1Tasks.size());
 
-        List<RectificationTask> user2Tasks = taskDAO.findByUserId(2L, 0, 10);
+        List<RectificationTask> user2Tasks = taskDAO.findByUserId(9002L, 0, 10);
         assertEquals(1, user2Tasks.size());
     }
 
@@ -96,8 +96,8 @@ public class RectificationTaskDAOTest extends BaseTest {
 
     @Test
     public void testCountByUserId() {
-        assertEquals(1, taskDAO.countByUserId(1L));
-        assertEquals(1, taskDAO.countByUserId(2L));
+        assertEquals(1, taskDAO.countByUserId(9001L));
+        assertEquals(1, taskDAO.countByUserId(9002L));
         assertEquals(0, taskDAO.countByUserId(999L));
     }
 

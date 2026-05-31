@@ -1,6 +1,6 @@
 package com.example.service;
 
-import com.example.util.AppConstants;
+import com.example.util.AppConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.BufferedReader;
@@ -28,39 +28,39 @@ public class DjlInferenceClient {
      */
     public static InferenceResult detect(String fileName) throws Exception {
         String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.name());
-        String urlStr = AppConstants.DJL_INFERENCE_URL + "/inference?file=" + encodedFileName + "&generateOutputImage=true";
+        String urlStr = AppConfig.getDjlInferenceUrl() + "/inference?file=" + encodedFileName + "&generateOutputImage=true";
 
         URI uri = new URI(urlStr);
         HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
-        conn.setRequestMethod("GET");
-        conn.setConnectTimeout(10000);
-        conn.setReadTimeout(60000); // 推理可能较慢，设置60秒超时
-        conn.setRequestProperty("Accept", "application/json");
+        try {
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(60000);
+            conn.setRequestProperty("Accept", "application/json");
 
-        int responseCode = conn.getResponseCode();
-        if (responseCode != 200) {
-            BufferedReader errorReader = new BufferedReader(
-                    new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8));
-            StringBuilder errorResponse = new StringBuilder();
-            String line;
-            while ((line = errorReader.readLine()) != null) {
-                errorResponse.append(line);
+            int responseCode = conn.getResponseCode();
+            if (responseCode != 200) {
+                String errorBody = readStream(conn.getErrorStream());
+                throw new RuntimeException("DJL 推理服务返回错误状态: " + responseCode + ", 响应: " + errorBody);
             }
-            errorReader.close();
+
+            String body = readStream(conn.getInputStream());
+            return mapper.readValue(body, InferenceResult.class);
+        } finally {
             conn.disconnect();
-            throw new RuntimeException("DJL 推理服务返回错误状态: " + responseCode + ", 响应: " + errorResponse);
         }
+    }
 
-        BufferedReader reader = new BufferedReader(
-                new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
-        StringBuilder response = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            response.append(line);
+    private static String readStream(java.io.InputStream stream) throws java.io.IOException {
+        if (stream == null) return "";
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            return sb.toString();
         }
-        reader.close();
-        conn.disconnect();
-
-        return mapper.readValue(response.toString(), InferenceResult.class);
     }
 }

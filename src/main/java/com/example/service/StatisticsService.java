@@ -5,6 +5,9 @@ import com.example.model.TrendVO;
 import com.example.model.TypeCountVO;
 import com.example.model.UserRankVO;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Map;
 
@@ -13,10 +16,16 @@ import java.util.Map;
  */
 public class StatisticsService {
 
+    private static final Logger logger = LoggerFactory.getLogger(StatisticsService.class);
+
     private final StatisticsDAO statisticsDAO;
 
     public StatisticsService() {
         this.statisticsDAO = new StatisticsDAO();
+    }
+
+    public StatisticsService(StatisticsDAO statisticsDAO) {
+        this.statisticsDAO = statisticsDAO;
     }
 
     /**
@@ -48,5 +57,19 @@ public class StatisticsService {
      */
     public List<UserRankVO> getUserViolationRank() {
         return statisticsDAO.getViolationUserRank();
+    }
+
+    /**
+     * 按违规类型统计数量
+     */
+    public List<TypeCountVO> countByViolationType() {
+        return statisticsDAO.countByViolationType();
+    }
+
+    /**
+     * 按违规等级统计数量
+     */
+    public List<TypeCountVO> countByViolationLevel() {
+        return statisticsDAO.countByViolationLevel();
     }
 }

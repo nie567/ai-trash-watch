@@ -7,6 +7,7 @@ import com.example.model.PageResult;
 import com.example.model.User;
 import com.example.service.GarbageRecordService;
 import com.example.util.AppConstants;
+import com.example.util.AppContext;
 import com.example.util.Result;
 
 import jakarta.servlet.ServletException;
@@ -27,7 +28,7 @@ public class GarbageRecordServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        recordService = new GarbageRecordService();
+        recordService = AppContext.get().getGarbageRecordService();
     }
 
     @Override
@@ -56,9 +57,15 @@ public class GarbageRecordServlet extends HttpServlet {
         String pathInfo = req.getPathInfo();
         if (pathInfo == null) pathInfo = "/";
 
-        User loginUser = (User) req.getSession().getAttribute(AppConstants.SESSION_LOGIN_USER);
+        User loginUser = (User) req.getSession().getAttribute(AppConstants.SESSION_USER);
         if (loginUser == null) {
             out.write(Result.error(401, "未登录").toJson());
+            return;
+        }
+
+        // 管理员不允许提交投放记录
+        if (loginUser.isAdmin()) {
+            out.write(Result.error(403, "管理员不允许投放垃圾").toJson());
             return;
         }
 
@@ -89,7 +96,7 @@ public class GarbageRecordServlet extends HttpServlet {
 
     private void showHistory(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        User loginUser = (User) req.getSession().getAttribute(AppConstants.SESSION_LOGIN_USER);
+        User loginUser = (User) req.getSession().getAttribute(AppConstants.SESSION_USER);
         if (loginUser == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
@@ -103,8 +110,9 @@ public class GarbageRecordServlet extends HttpServlet {
         try {
             pageSize = Integer.parseInt(req.getParameter("pageSize"));
         } catch (Exception ignored) {}
+        String status = req.getParameter("status");
 
-        PageResult<GarbageRecord> pageResult = recordService.getUserRecords(loginUser.getId().longValue(), page, pageSize);
+        PageResult<GarbageRecord> pageResult = recordService.getUserRecords(loginUser.getId().longValue(), page, pageSize, status);
         req.setAttribute("pageResult", pageResult);
         req.getRequestDispatcher("/WEB-INF/jsp/user/garbage-history.jsp").forward(req, resp);
     }

@@ -7,7 +7,13 @@ import com.example.model.RectificationTask;
 import com.example.model.ViolationRecord;
 import com.example.util.AppConstants;
 import com.example.util.BusinessException;
+import com.example.util.DBUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -15,6 +21,8 @@ import java.util.List;
  * 整改任务业务服务
  */
 public class RectificationService {
+
+    private static final Logger logger = LoggerFactory.getLogger(RectificationService.class);
 
     private final RectificationTaskDAO taskDAO;
     private final ViolationRecordDAO violationDAO;
@@ -24,8 +32,13 @@ public class RectificationService {
         this.violationDAO = new ViolationRecordDAO();
     }
 
+    public RectificationService(RectificationTaskDAO taskDAO, ViolationRecordDAO violationDAO) {
+        this.taskDAO = taskDAO;
+        this.violationDAO = violationDAO;
+    }
+
     /**
-     * 创建整改任务
+     * 创建整改任务（事务保护）
      * 创建前检查：该违规记录是否已有未完成整改任务
      */
     public Long createTask(Long violationId, Long userId, String requirement, String deadline) {
@@ -56,7 +69,6 @@ public class RectificationService {
             try {
                 task.setDeadline(Timestamp.valueOf(deadline.trim() + " 00:00:00"));
             } catch (Exception e) {
-                // 如果格式不对，尝试直接解析
                 try {
                     task.setDeadline(Timestamp.valueOf(deadline.trim()));
                 } catch (Exception ex) {
@@ -66,15 +78,31 @@ public class RectificationService {
         }
         task.setStatus(AppConstants.RECT_STATUS_PENDING);
 
-        Long taskId = taskDAO.insert(task);
-        if (taskId == null) {
+        Connection conn = null;
+        try {
+            conn = DBUtil.getConnection();
+            DBUtil.beginTransaction(conn);
+
+            Long taskId = taskDAO.insert(task, conn);
+            if (taskId == null) {
+                throw new BusinessException(500, "创建整改任务失败");
+            }
+
+            // 更新违规记录状态
+            violationDAO.updateStatus(violationId, AppConstants.VIOLATION_STATUS_PENDING, conn);
+
+            DBUtil.commitTransaction(conn);
+            return taskId;
+        } catch (BusinessException e) {
+            DBUtil.rollbackTransaction(conn);
+            throw e;
+        } catch (SQLException e) {
+            DBUtil.rollbackTransaction(conn);
+            logger.error("创建整改任务失败, violationId={}", violationId, e);
             throw new BusinessException(500, "创建整改任务失败");
+        } finally {
+            DBUtil.closeConnection(conn);
         }
-
-        // 更新违规记录状态
-        violationDAO.updateStatus(violationId, AppConstants.VIOLATION_STATUS_PENDING);
-
-        return taskId;
     }
 
     /**
@@ -89,13 +117,20 @@ public class RectificationService {
      * 用户整改任务分页
      */
     public PageResult<RectificationTask> getUserTasks(Long userId, int page, int pageSize) {
+        return getUserTasks(userId, page, pageSize, null);
+    }
+
+    /**
+     * 用户整改任务分页，支持状态筛选
+     */
+    public PageResult<RectificationTask> getUserTasks(Long userId, int page, int pageSize, String status) {
         if (page < 1) page = AppConstants.DEFAULT_PAGE_NUM;
         if (pageSize < 1) pageSize = AppConstants.DEFAULT_PAGE_SIZE;
         if (pageSize > AppConstants.MAX_PAGE_SIZE) pageSize = AppConstants.MAX_PAGE_SIZE;
 
         int offset = (page - 1) * pageSize;
-        List<RectificationTask> list = taskDAO.findByUserId(userId, offset, pageSize);
-        int total = taskDAO.countByUserId(userId);
+        List<RectificationTask> list = taskDAO.findByUserId(userId, offset, pageSize, status);
+        int total = taskDAO.countByUserId(userId, status);
         return new PageResult<>(list, total, page, pageSize);
     }
 
@@ -148,7 +183,7 @@ public class RectificationService {
     }
 
     /**
-     * 管理员复核整改
+     * 管理员复核整改（事务保护）
      */
     public void reviewTask(Long taskId, String reviewResult, String reviewComment) {
         if (taskId == null) {
@@ -175,11 +210,25 @@ public class RectificationService {
             newStatus = AppConstants.RECT_STATUS_REJECTED;
         }
 
-        taskDAO.review(taskId, reviewResult, reviewComment, newStatus);
+        Connection conn = null;
+        try {
+            conn = DBUtil.getConnection();
+            DBUtil.beginTransaction(conn);
 
-        // 如果复核通过，更新违规记录状态为已整改
-        if (AppConstants.RECT_STATUS_APPROVED.equals(newStatus)) {
-            violationDAO.updateStatus(task.getViolationId(), AppConstants.VIOLATION_STATUS_RECTIFIED);
+            taskDAO.review(taskId, reviewResult, reviewComment, newStatus, conn);
+
+            // 如果复核通过，更新违规记录状态为已整改
+            if (AppConstants.RECT_STATUS_APPROVED.equals(newStatus)) {
+                violationDAO.updateStatus(task.getViolationId(), AppConstants.VIOLATION_STATUS_RECTIFIED, conn);
+            }
+
+            DBUtil.commitTransaction(conn);
+        } catch (SQLException e) {
+            DBUtil.rollbackTransaction(conn);
+            logger.error("复核整改任务失败, taskId={}", taskId, e);
+            throw new BusinessException(500, "复核整改任务失败");
+        } finally {
+            DBUtil.closeConnection(conn);
         }
     }
 }

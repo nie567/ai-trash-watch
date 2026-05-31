@@ -2,6 +2,7 @@ package com.example.controller;
 
 import com.example.model.GarbageRule;
 import com.example.service.RuleService;
+import com.example.util.AppContext;
 import com.example.util.Result;
 
 import jakarta.servlet.ServletException;
@@ -12,18 +13,22 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 分类规则管理控制器
  */
 @WebServlet("/admin/rule/*")
 public class RuleServlet extends HttpServlet {
+    private static final Logger logger = LoggerFactory.getLogger(RuleServlet.class);
+
 
     private RuleService ruleService;
 
     @Override
     public void init() throws ServletException {
-        ruleService = new RuleService();
+        ruleService = AppContext.get().getRuleService();
     }
 
     @Override
@@ -69,7 +74,7 @@ public class RuleServlet extends HttpServlet {
                 ruleService.saveRule(rule);
                 out.write(Result.success().toJson());
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("unexpected error", e);
                 out.write(Result.error(e.getMessage()).toJson());
             }
         } else {

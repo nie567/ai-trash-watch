@@ -1,10 +1,13 @@
 package com.example.controller;
 
 import com.example.model.PageResult;
+import com.example.model.User;
 import com.example.model.ViolationRecord;
 import com.example.service.RectificationService;
+import com.example.service.UserService;
 import com.example.service.ViolationService;
 import com.example.util.AppConstants;
+import com.example.util.AppContext;
 import com.example.util.Result;
 
 import jakarta.servlet.ServletException;
@@ -14,7 +17,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-
 /**
  * 管理员侧违规管理控制器
  */
@@ -23,11 +25,13 @@ public class AdminViolationServlet extends HttpServlet {
 
     private ViolationService violationService;
     private RectificationService rectificationService;
+    private UserService userService;
 
     @Override
     public void init() throws ServletException {
-        violationService = new ViolationService();
-        rectificationService = new RectificationService();
+        violationService = AppContext.get().getViolationService();
+        rectificationService = AppContext.get().getRectificationService();
+        userService = AppContext.get().getUserService();
     }
 
     @Override
@@ -65,6 +69,14 @@ public class AdminViolationServlet extends HttpServlet {
                 ViolationRecord violation = violationService.getById(violationId);
                 if (violation == null) {
                     out.write(Result.error("违规记录不存在").toJson());
+                    return;
+                }
+
+                // 检查目标用户不是管理员
+                // 通过 UserService 检查目标用户角色
+                User targetUser = userService.getUserById(violation.getUserId().intValue());
+                if (targetUser != null && targetUser.isAdmin()) {
+                    out.write(Result.error("不能给管理员创建整改任务").toJson());
                     return;
                 }
 

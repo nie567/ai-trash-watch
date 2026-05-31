@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>错误 - 用户管理系统</title>
+    <title>错误 - 垃圾分类监管系统</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body>
-    <div class="container">
+    <div class="container" style="padding-top:60px;">
         <div class="form-wrapper">
-            <h2 style="color: #dc3545; margin-bottom: 20px;">出错了</h2>
-            <p style="margin-bottom: 20px;">
+            <h2 class="text-danger" style="margin-bottom: 20px;">出错了</h2>
+            <p class="text-secondary" style="margin-bottom: 20px;">
                 抱歉，系统发生了错误。请稍后再试或联系管理员。
             </p>
             <%

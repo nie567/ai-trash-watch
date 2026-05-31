@@ -16,51 +16,70 @@
             <h2 class="card-title">创建新用户</h2>
             
             <c:if test="${not empty error}">
-                <div style="margin-bottom:20px;padding:12px 16px;background:#f8d7da;color:#721c24;border-radius:4px;">${error}</div>
+                <div class="alert alert-error">${error}</div>
             </c:if>
             
-            <form method="post" action="${pageContext.request.contextPath}/admin/users/create">
+            <form id="createForm" method="post" action="${pageContext.request.contextPath}/admin/users/create">
+                <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
                 <div class="form-group">
-                    <label for="username">用户名 <span style="color:#e74c3c;">*</span></label>
-                    <input type="text" id="username" name="username" placeholder="请输入用户名" required
-                           style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
-                    <p style="margin:6px 0 0 0;font-size:12px;color:#7f8c8d;">用于登录系统，长度3-20个字符</p>
+                    <label for="username">用户名 <span class="required">*</span></label>
+                    <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+                    <p class="text-muted" style="margin-top:6px;font-size:14px;">用于登录系统，长度3-20个字符</p>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">密码 <span style="color:#e74c3c;">*</span></label>
-                    <input type="password" id="password" name="password" placeholder="请输入密码" required
-                           style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
-                    <p style="margin:6px 0 0 0;font-size:12px;color:#7f8c8d;">至少6个字符</p>
+                    <label for="password">密码 <span class="required">*</span></label>
+                    <input type="password" id="password" name="password" placeholder="请输入密码" required>
+                    <p class="text-muted" style="margin-top:6px;font-size:14px;">长度6-20个字符</p>
                 </div>
                 
                 <div class="form-group">
                     <label for="role">角色</label>
-                    <select id="role" name="role"
-                            style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+                    <select id="role" name="role" class="search-input" style="width:100%;">
                         <option value="user">普通用户</option>
                         <option value="admin">管理员</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
+                    <label for="realName">真实姓名</label>
+                    <input type="text" id="realName" name="realName" placeholder="请输入真实姓名">
+                </div>
+                
+                <div class="form-group">
                     <label for="email">邮箱</label>
-                    <input type="email" id="email" name="email" placeholder="请输入邮箱"
-                           style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+                    <input type="email" id="email" name="email" placeholder="请输入邮箱">
                 </div>
                 
                 <div class="form-group">
                     <label for="phone">手机号</label>
-                    <input type="tel" id="phone" name="phone" placeholder="请输入手机号"
-                           style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+                    <input type="tel" id="phone" name="phone" placeholder="请输入手机号">
                 </div>
                 
-                <div style="display:flex;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid #eee;">
+                <div class="form-actions">
                     <a href="${pageContext.request.contextPath}/admin/users" class="btn btn-secondary">取消</a>
                     <button type="submit" class="btn btn-success">创建用户</button>
                 </div>
             </form>
         </div>
     </div>
+
+<script>
+window._pageConfig = {
+    contextPath: '${pageContext.request.contextPath}',
+    csrfToken: '${sessionScope._csrfToken}'
+};
+</script>
+<script src="${pageContext.request.contextPath}/js/common.js"></script>
+<script>
+(function() {
+    'use strict';
+    var form = document.getElementById('createForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        ajaxSubmit(form, { successMsg: '用户创建成功' });
+    });
+})();
+</script>
 </body>
 </html>

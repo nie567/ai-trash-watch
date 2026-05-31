@@ -28,12 +28,16 @@ public class AdminFilter implements Filter {
         HttpSession session = req.getSession(false);
         
         User loginUser = session != null ? (User) session.getAttribute(AppConstants.SESSION_USER) : null;
-        
+        boolean isAjax = "XMLHttpRequest".equals(req.getHeader("X-Requested-With"));
+
         if (loginUser == null || !loginUser.isAdmin()) {
-            // 不是管理员，返回 403 禁止访问
-            resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            req.setAttribute("error", "您没有权限访问此页面");
-            req.getRequestDispatcher("/WEB-INF/jsp/error/403.jsp").forward(req, resp);
+            if (isAjax) {
+                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                resp.setContentType("application/json;charset=UTF-8");
+                resp.getWriter().write("{\"code\":403,\"message\":\"无管理员权限\"}");
+            } else {
+                resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+            }
             return;
         }
         

@@ -19,22 +19,22 @@ public class ViolationRecordDAOTest extends BaseTest {
         truncateTable("violation_record");
         truncateTable("garbage_record");
         executeSQL("INSERT IGNORE INTO user (id, username, password_hash, role, status) VALUES " +
-                "(1, 'testuser1', 'hash1', 'user', 1), " +
-                "(2, 'testuser2', 'hash2', 'user', 1)");
+                "(9001, 'testuser1', 'hash1', 'user', 1), " +
+                "(9002, 'testuser2', 'hash2', 'user', 1)");
         executeSQL("INSERT INTO garbage_record (id, user_id, image_name, image_path, recommended_category, selected_category, is_correct, status) VALUES " +
-                "(100, 1, 'test1.jpg', '/input/test1.jpg', '可回收物', '其他垃圾', 0, 'PENDING'), " +
-                "(101, 2, 'test2.jpg', '/input/test2.jpg', '厨余垃圾', '其他垃圾', 0, 'PENDING')");
+                "(100, 9001, 'test1.jpg', '/input/test1.jpg', '可回收物', '其他垃圾', 0, 'PENDING'), " +
+                "(101, 9002, 'test2.jpg', '/input/test2.jpg', '厨余垃圾', '其他垃圾', 0, 'PENDING')");
         executeSQL("INSERT INTO violation_record (record_id, user_id, violation_type, description, level, status, create_time) VALUES " +
-                "(100, 1, '分类错误', '推荐：可回收物，选择：其他垃圾', 'LOW', 'PENDING', NOW()), " +
-                "(100, 1, '混投', '混合投放', 'MEDIUM', 'RECTIFIED', NOW()), " +
-                "(101, 2, '分类错误', '推荐：厨余垃圾，选择：其他垃圾', 'LOW', 'PENDING', NOW())");
+                "(100, 9001, '分类错误', '推荐：可回收物，选择：其他垃圾', 'LOW', 'PENDING', NOW()), " +
+                "(100, 9001, '混投', '混合投放', 'MEDIUM', 'RECTIFIED', NOW()), " +
+                "(101, 9002, '分类错误', '推荐：厨余垃圾，选择：其他垃圾', 'LOW', 'PENDING', NOW())");
     }
 
     @Test
     public void testInsert() {
         ViolationRecord vr = new ViolationRecord();
         vr.setRecordId(100L);
-        vr.setUserId(1L);
+        vr.setUserId(9001L);
         vr.setViolationType("分类错误");
         vr.setDescription("测试违规");
         vr.setLevel("HIGH");
@@ -73,13 +73,13 @@ public class ViolationRecordDAOTest extends BaseTest {
 
     @Test
     public void testFindByUserId() {
-        List<ViolationRecord> user1List = violationDAO.findByUserId(1L, 0, 10);
+        List<ViolationRecord> user1List = violationDAO.findByUserId(9001L, 0, 10);
         assertEquals("用户1应有2条违规", 2, user1List.size());
 
-        List<ViolationRecord> user2List = violationDAO.findByUserId(2L, 0, 10);
+        List<ViolationRecord> user2List = violationDAO.findByUserId(9002L, 0, 10);
         assertEquals("用户2应有1条违规", 1, user2List.size());
 
-        List<ViolationRecord> paged = violationDAO.findByUserId(1L, 0, 1);
+        List<ViolationRecord> paged = violationDAO.findByUserId(9001L, 0, 1);
         assertEquals("分页查询应返回1条", 1, paged.size());
     }
 
@@ -97,8 +97,8 @@ public class ViolationRecordDAOTest extends BaseTest {
 
     @Test
     public void testCountByUserId() {
-        assertEquals(2, violationDAO.countByUserId(1L));
-        assertEquals(1, violationDAO.countByUserId(2L));
+        assertEquals(2, violationDAO.countByUserId(9001L));
+        assertEquals(1, violationDAO.countByUserId(9002L));
         assertEquals(0, violationDAO.countByUserId(999L));
     }
 
@@ -123,8 +123,8 @@ public class ViolationRecordDAOTest extends BaseTest {
 
     @Test
     public void testCountByUserIdAll() {
-        assertEquals(2, violationDAO.countByUserIdAll(1L));
-        assertEquals(1, violationDAO.countByUserIdAll(2L));
+        assertEquals(2, violationDAO.countByUserIdAll(9001L));
+        assertEquals(1, violationDAO.countByUserIdAll(9002L));
     }
 
     @Test

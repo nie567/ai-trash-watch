@@ -14,7 +14,6 @@ public class AppConstants {
 
     // Session 键
     public static final String SESSION_USER = "loginUser";
-    public static final String SESSION_LOGIN_USER = "loginUser";
     public static final String SESSION_USER_ID = "loginUserId";
     public static final String REQUEST_ERROR = "error";
     public static final String REQUEST_SUCCESS = "success";
@@ -33,13 +32,6 @@ public class AppConstants {
     public static final int DEFAULT_PAGE_SIZE = 10;
     public static final int MAX_PAGE_SIZE = 100;
     public static final int DEFAULT_PAGE_NUM = 1;
-
-    // DJL 推理服务
-    public static final String DJL_INFERENCE_URL = "http://localhost:8080";
-
-    // 图片路径
-    public static final String DJL_INPUT_DIR = "D:\\ny\\data_set\\input";
-    public static final String DJL_OUTPUT_DIR = "D:\\ny\\data_set\\output";
 
     // 垃圾类别
     public static final String CATEGORY_RECYCLABLE = "可回收物";

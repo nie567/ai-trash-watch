@@ -19,7 +19,7 @@ public abstract class BaseTest {
     @Before
     public void setUp() throws SQLException {
         // 获取数据库连接
-        connection = DBUtil.getInstance().getConnection();
+        connection = DBUtil.getConnection();
         
         // 初始化测试数据
         initTestData();
@@ -62,10 +62,16 @@ public abstract class BaseTest {
     }
 
     /**
-     * 清空指定表
+     * 清空指定表数据（处理外键约束）
+     * 临时禁用外键检查以支持有外键引用的表
      */
     protected void truncateTable(String tableName) throws SQLException {
-        executeSQL("TRUNCATE TABLE " + tableName);
+        executeSQL("SET FOREIGN_KEY_CHECKS=0");
+        try {
+            executeSQL("TRUNCATE TABLE " + tableName);
+        } finally {
+            executeSQL("SET FOREIGN_KEY_CHECKS=1");
+        }
     }
 
     /**

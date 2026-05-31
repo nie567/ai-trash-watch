@@ -30,8 +30,8 @@ public class GarbageRecordServiceTest extends BaseTest {
         truncateTable("violation_record");
         truncateTable("garbage_record");
         executeSQL("INSERT IGNORE INTO user (id, username, password_hash, role, status) VALUES " +
-                "(1, 'gruser1', 'hash1', 'user', 1), " +
-                "(2, 'gruser2', 'hash2', 'user', 1)");
+                "(9001, 'gruser1', 'hash1', 'user', 1), " +
+                "(9002, 'gruser2', 'hash2', 'user', 1)");
     }
 
     @Test
@@ -43,7 +43,7 @@ public class GarbageRecordServiceTest extends BaseTest {
         dto.setSelectedCategory("可回收物");
         dto.setIsMixed(0);
 
-        Long recordId = recordService.saveRecord(1L, dto);
+        Long recordId = recordService.saveRecord(9001L, dto);
         assertNotNull("保存成功应返回ID", recordId);
 
         GarbageRecord record = recordDAO.findById(recordId);
@@ -51,7 +51,7 @@ public class GarbageRecordServiceTest extends BaseTest {
         assertEquals(Integer.valueOf(1), record.getIsCorrect());
         assertEquals(AppConstants.RECORD_STATUS_PENDING, record.getStatus());
 
-        List<ViolationRecord> violations = violationDAO.findByUserId(1L, 0, 10);
+        List<ViolationRecord> violations = violationDAO.findByUserId(9001L, 0, 10);
         assertEquals("正确投放不应有违规", 0, violations.size());
     }
 
@@ -64,13 +64,13 @@ public class GarbageRecordServiceTest extends BaseTest {
         dto.setSelectedCategory("其他垃圾");
         dto.setIsMixed(0);
 
-        Long recordId = recordService.saveRecord(1L, dto);
+        Long recordId = recordService.saveRecord(9001L, dto);
         assertNotNull(recordId);
 
         GarbageRecord record = recordDAO.findById(recordId);
         assertEquals(Integer.valueOf(0), record.getIsCorrect());
 
-        List<ViolationRecord> violations = violationDAO.findByUserId(1L, 0, 10);
+        List<ViolationRecord> violations = violationDAO.findByUserId(9001L, 0, 10);
         assertTrue("错误投放应有违规记录", violations.size() >= 1);
     }
 
@@ -102,7 +102,7 @@ public class GarbageRecordServiceTest extends BaseTest {
 
         dto.setDetections(detections);
 
-        Long recordId = recordService.saveRecord(1L, dto);
+        Long recordId = recordService.saveRecord(9001L, dto);
         assertNotNull(recordId);
 
         List<DetectionResult> savedDetections = detectionDAO.findByRecordId(recordId);
@@ -126,7 +126,7 @@ public class GarbageRecordServiceTest extends BaseTest {
         try {
             GarbageRecordSubmitDTO dto = new GarbageRecordSubmitDTO();
             dto.setSelectedCategory(null);
-            recordService.saveRecord(1L, dto);
+            recordService.saveRecord(9001L, dto);
             fail("应抛出BusinessException");
         } catch (BusinessException e) {
             assertEquals(400, e.getCode());
@@ -140,9 +140,9 @@ public class GarbageRecordServiceTest extends BaseTest {
         dto.setImagePath("/input/test.jpg");
         dto.setRecommendedCategory("可回收物");
         dto.setSelectedCategory("可回收物");
-        recordService.saveRecord(1L, dto);
+        recordService.saveRecord(9001L, dto);
 
-        PageResult<GarbageRecord> page = recordService.getUserRecords(1L, 1, 10);
+        PageResult<GarbageRecord> page = recordService.getUserRecords(9001L, 1, 10);
         assertNotNull(page);
         assertNotNull(page.getData());
         assertFalse("应有记录", page.getData().isEmpty());
@@ -161,7 +161,7 @@ public class GarbageRecordServiceTest extends BaseTest {
         dto.setImagePath("/input/detail.jpg");
         dto.setRecommendedCategory("可回收物");
         dto.setSelectedCategory("可回收物");
-        Long recordId = recordService.saveRecord(1L, dto);
+        Long recordId = recordService.saveRecord(9001L, dto);
 
         GarbageRecordDetailVO detail = recordService.getRecordDetail(recordId);
         assertNotNull(detail);
@@ -187,7 +187,7 @@ public class GarbageRecordServiceTest extends BaseTest {
         dto.setImagePath("/input/review.jpg");
         dto.setRecommendedCategory("可回收物");
         dto.setSelectedCategory("其他垃圾");
-        Long recordId = recordService.saveRecord(1L, dto);
+        Long recordId = recordService.saveRecord(9001L, dto);
 
         recordService.reviewRecord(recordId, "其他垃圾", "管理员确认");
 
@@ -209,7 +209,7 @@ public class GarbageRecordServiceTest extends BaseTest {
         dto.setImagePath("/input/review2.jpg");
         dto.setRecommendedCategory("可回收物");
         dto.setSelectedCategory("可回收物");
-        Long recordId = recordService.saveRecord(1L, dto);
+        Long recordId = recordService.saveRecord(9001L, dto);
 
         recordService.reviewRecord(recordId, "其他垃圾", "管理员确认");
 
@@ -224,7 +224,7 @@ public class GarbageRecordServiceTest extends BaseTest {
         dto.setImagePath("/input/delete.jpg");
         dto.setRecommendedCategory("可回收物");
         dto.setSelectedCategory("其他垃圾");
-        Long recordId = recordService.saveRecord(1L, dto);
+        Long recordId = recordService.saveRecord(9001L, dto);
 
         recordService.deleteRecord(recordId);
 

@@ -4,6 +4,7 @@ import com.example.model.PageResult;
 import com.example.model.RectificationTask;
 import com.example.service.RectificationService;
 import com.example.util.AppConstants;
+import com.example.util.AppContext;
 import com.example.util.Result;
 
 import jakarta.servlet.ServletException;
@@ -13,18 +14,22 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 管理员侧整改任务控制器
  */
 @WebServlet("/admin/rectification/*")
 public class AdminRectificationServlet extends HttpServlet {
+    private static final Logger logger = LoggerFactory.getLogger(AdminRectificationServlet.class);
+
 
     private RectificationService rectService;
 
     @Override
     public void init() throws ServletException {
-        rectService = new RectificationService();
+        rectService = AppContext.get().getRectificationService();
     }
 
     @Override
@@ -59,7 +64,7 @@ public class AdminRectificationServlet extends HttpServlet {
                 rectService.reviewTask(id, reviewResult, reviewComment);
                 out.write(Result.success().toJson());
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("unexpected error", e);
                 out.write(Result.error(e.getMessage()).toJson());
             }
         } else {

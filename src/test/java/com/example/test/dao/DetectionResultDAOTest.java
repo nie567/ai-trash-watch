@@ -17,7 +17,15 @@ public class DetectionResultDAOTest extends BaseTest {
 
     @Override
     protected void initTestData() throws SQLException {
+        // 先创建父表记录（detection_result.record_id 外键引用 garbage_record.id）
         truncateTable("detection_result");
+        truncateTable("garbage_record");
+        executeSQL("INSERT IGNORE INTO user (id, username, password_hash, role, status) VALUES " +
+                "(9001, 'detuser1', 'hash1', 'user', 1), " +
+                "(9002, 'detuser2', 'hash2', 'user', 1)");
+        executeSQL("INSERT INTO garbage_record (id, user_id, image_name, image_path, recommended_category, selected_category, is_correct, status) VALUES " +
+                "(1, 9001, 'det1.jpg', '/input/det1.jpg', '可回收物', '可回收物', 1, 'PENDING'), " +
+                "(2, 9002, 'det2.jpg', '/input/det2.jpg', '厨余垃圾', '厨余垃圾', 1, 'PENDING')");
         executeSQL("INSERT INTO detection_result (record_id, class_name, confidence, x_min, y_min, x_max, y_max, mapped_category, create_time) VALUES " +
                 "(1, 'METAL', 0.95, 10, 20, 100, 200, '可回收物', NOW()), " +
                 "(1, 'PLASTIC', 0.85, 30, 40, 150, 250, '可回收物', NOW()), " +
@@ -25,7 +33,11 @@ public class DetectionResultDAOTest extends BaseTest {
     }
 
     @Test
-    public void testBatchInsert() {
+    public void testBatchInsert() throws SQLException {
+        // 先创建 record_id=3 的父记录
+        executeSQL("INSERT INTO garbage_record (id, user_id, image_name, image_path, recommended_category, selected_category, is_correct, status) VALUES " +
+                "(3, 9001, 'det3.jpg', '/input/det3.jpg', '可回收物', '可回收物', 1, 'PENDING')");
+
         List<DetectionResult> list = new ArrayList<>();
         DetectionResult dr1 = new DetectionResult();
         dr1.setRecordId(3L);
@@ -86,7 +98,11 @@ public class DetectionResultDAOTest extends BaseTest {
     }
 
     @Test
-    public void testBatchInsertWithNullValues() {
+    public void testBatchInsertWithNullValues() throws SQLException {
+        // 先创建 record_id=4 的父记录
+        executeSQL("INSERT INTO garbage_record (id, user_id, image_name, image_path, recommended_category, selected_category, is_correct, status) VALUES " +
+                "(4, 9001, 'det4.jpg', '/input/det4.jpg', '其他垃圾', '其他垃圾', 1, 'PENDING')");
+
         List<DetectionResult> list = new ArrayList<>();
         DetectionResult dr = new DetectionResult();
         dr.setRecordId(4L);

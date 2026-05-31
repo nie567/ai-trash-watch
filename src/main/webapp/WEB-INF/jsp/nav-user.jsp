@@ -7,7 +7,12 @@
 %>
 <nav class="navbar">
     <a class="navbar-brand" href="<%=contextPath%>/inference">垃圾分类监管系统</a>
-    <ul class="navbar-menu">
+    <button class="navbar-toggle" id="navbarToggle" aria-label="菜单">
+        <span class="navbar-toggle-bar"></span>
+        <span class="navbar-toggle-bar"></span>
+        <span class="navbar-toggle-bar"></span>
+    </button>
+    <ul class="navbar-menu" id="navbarMenu">
         <li><a href="<%=contextPath%>/user/profile" class="<%=currentUri.contains("/user/profile") ? "active" : ""%>">我的资料</a></li>
         <li><a href="<%=contextPath%>/inference" class="<%=currentUri.contains("/inference") ? "active" : ""%>">垃圾投放</a></li>
         <li><a href="<%=contextPath%>/user/garbage-record/list" class="<%=currentUri.contains("/garbage-record") ? "active" : ""%>">投放记录</a></li>

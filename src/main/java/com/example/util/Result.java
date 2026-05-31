@@ -1,9 +1,11 @@
 package com.example.util;
 
-/**
- * 统一响应结果封装
- */
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class Result<T> {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     private int code;
     private String message;
     private T data;
@@ -16,13 +18,24 @@ public class Result<T> {
     private Result() {}
 
     public static <T> Result<T> success() {
-        return success(null);
+        Result<T> result = new Result<>();
+        result.code = SUCCESS;
+        result.message = "success";
+        return result;
     }
 
     public static <T> Result<T> success(T data) {
         Result<T> result = new Result<>();
         result.code = SUCCESS;
+        result.message = "success";
         result.data = data;
+        return result;
+    }
+
+    public static <T> Result<T> success(int code, String message) {
+        Result<T> result = new Result<>();
+        result.code = code;
+        result.message = message;
         return result;
     }
 
@@ -53,28 +66,11 @@ public class Result<T> {
     public String getMessage() { return message; }
     public T getData() { return data; }
 
-    /**
-     * 将 Result 对象转换为 JSON 字符串
-     */
     public String toJson() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\"code\":").append(code);
-        sb.append(",\"message\":\"").append(message != null ? escapeJson(message) : "").append("\"");
-        sb.append(",\"data\":");
-        if (data != null) {
-            sb.append(data.toString());
-        } else {
-            sb.append("null");
+        try {
+            return MAPPER.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            return "{\"code\":500,\"message\":\"JSON serialization error\"}";
         }
-        sb.append("}");
-        return sb.toString();
-    }
-
-    private static String escapeJson(String s) {
-        return s.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
     }
 }

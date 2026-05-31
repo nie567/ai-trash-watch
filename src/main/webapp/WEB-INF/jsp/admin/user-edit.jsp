@@ -16,30 +16,34 @@
             <h2 class="card-title">编辑用户信息</h2>
             
             <c:if test="${not empty error}">
-                <div style="margin-bottom:20px;padding:12px 16px;background:#f8d7da;color:#721c24;border-radius:4px;">${error}</div>
+                <div class="alert alert-error">${error}</div>
             </c:if>
             
             <!-- 用户基本信息展示 -->
-            <div style="background:#f8f9fa;padding:16px;border-radius:6px;margin-bottom:24px;">
+            <div style="background:rgba(255,255,255,0.03);padding:16px;border-radius:8px;margin-bottom:24px;border:1px solid rgba(255,255,255,0.06);">
                 <div style="display:flex;gap:24px;flex-wrap:wrap;">
                     <div>
-                        <span style="color:#7f8c8d;font-size:13px;">用户名</span>
-                        <p style="margin:4px 0 0 0;font-size:16px;font-weight:600;">${user.username}</p>
+                        <span class="text-muted" style="font-size:13px;">用户名</span>
+                        <p style="margin:4px 0 0 0;font-size:16px;font-weight:600;color:var(--accent-purple-end);">${user.username}</p>
                     </div>
                     <div>
-                        <span style="color:#7f8c8d;font-size:13px;">用户ID</span>
+                        <span class="text-muted" style="font-size:13px;">用户ID</span>
                         <p style="margin:4px 0 0 0;font-size:16px;">${user.id}</p>
                     </div>
                 </div>
             </div>
             
-            <form method="post" action="${pageContext.request.contextPath}/admin/users/edit">
+            <form id="editForm" method="post" action="${pageContext.request.contextPath}/admin/users/edit">
+                <input type="hidden" name="_csrf" value="${sessionScope._csrfToken}">
                 <input type="hidden" name="id" value="${user.id}">
+                <div class="form-group">
+                    <label for="realName">真实姓名</label>
+                    <input type="text" id="realName" name="realName" value="${user.realName}" placeholder="请输入真实姓名">
+                </div>
                 
                 <div class="form-group">
                     <label for="role">角色</label>
-                    <select id="role" name="role"
-                            style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+                    <select id="role" name="role" class="search-input" style="width:100%;">
                         <option value="user" ${user.role == 'user' ? 'selected' : ''}>普通用户</option>
                         <option value="admin" ${user.role == 'admin' ? 'selected' : ''}>管理员</option>
                     </select>
@@ -47,22 +51,38 @@
                 
                 <div class="form-group">
                     <label for="email">邮箱</label>
-                    <input type="email" id="email" name="email" value="${user.email}" placeholder="请输入邮箱"
-                           style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+                    <input type="email" id="email" name="email" value="${user.email}" placeholder="请输入邮箱">
                 </div>
                 
                 <div class="form-group">
                     <label for="phone">手机号</label>
-                    <input type="tel" id="phone" name="phone" value="${user.phone}" placeholder="请输入手机号"
-                           style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:4px;font-size:14px;">
+                    <input type="tel" id="phone" name="phone" value="${user.phone}" placeholder="请输入手机号">
                 </div>
                 
-                <div style="display:flex;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid #eee;">
+                <div class="form-actions">
                     <a href="${pageContext.request.contextPath}/admin/users" class="btn btn-secondary">取消</a>
                     <button type="submit" class="btn btn-success">保存修改</button>
                 </div>
             </form>
         </div>
     </div>
+
+<script>
+window._pageConfig = {
+    contextPath: '${pageContext.request.contextPath}',
+    csrfToken: '${sessionScope._csrfToken}'
+};
+</script>
+<script src="${pageContext.request.contextPath}/js/common.js"></script>
+<script>
+(function() {
+    'use strict';
+    var form = document.getElementById('editForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        ajaxSubmit(form, { successMsg: '用户信息已更新' });
+    });
+})();
+</script>
 </body>
 </html>

@@ -17,13 +17,13 @@
             <h2 class="card-title">整改任务管理</h2>
 
             <div class="toolbar">
-                <form class="search-form" method="get">
+                <form class="search-form" method="get" action="${pageContext.request.contextPath}/admin/rectification/list">
                     <select name="status" class="search-input" style="width:150px;">
                         <option value="">全部状态</option>
-                        <option value="PENDING" ${status == 'PENDING' ? 'selected' : ''}>待提交</option>
-                        <option value="SUBMITTED" ${status == 'SUBMITTED' ? 'selected' : ''}>已提交</option>
-                        <option value="APPROVED" ${status == 'APPROVED' ? 'selected' : ''}>已通过</option>
-                        <option value="REJECTED" ${status == 'REJECTED' ? 'selected' : ''}>已驳回</option>
+                        <option value="PENDING" ${param.status == 'PENDING' ? 'selected' : ''}>待提交</option>
+                        <option value="SUBMITTED" ${param.status == 'SUBMITTED' ? 'selected' : ''}>已提交</option>
+                        <option value="APPROVED" ${param.status == 'APPROVED' ? 'selected' : ''}>已通过</option>
+                        <option value="REJECTED" ${param.status == 'REJECTED' ? 'selected' : ''}>已驳回</option>
                     </select>
                     <button type="submit" class="btn btn-primary">筛选</button>
                 </form>
@@ -48,26 +48,27 @@
                             <td>${t.userId}</td>
                             <td>${t.violationId}</td>
                             <td>${t.requirement}</td>
-                            <td>${empty t.submitDesc ? '-' : t.submitDesc}</td>
-                            <td><span class="badge badge-${t.status eq 'PENDING' ? 'pending' : t.status eq 'SUBMITTED' ? 'submitted' : t.status eq 'APPROVED' ? 'approved' : 'rejected'}">${t.status}</span></td>
-                            <td>
+                            <td>${t.submitDesc}</td>
+                            <td><span class="badge ${t.status == 'PENDING' ? 'badge-pending' : t.status == 'SUBMITTED' ? 'badge-submitted' : t.status == 'APPROVED' ? 'badge-rectified' : 'badge-rejected'}">${t.status == 'PENDING' ? '待提交' : t.status == 'SUBMITTED' ? '已提交' : t.status == 'APPROVED' ? '已通过' : '已驳回'}</span></td>
+                            <td class="actions">
                                 <c:if test="${t.status == 'SUBMITTED'}">
                                     <button class="btn btn-small btn-success" onclick="showReviewModal(${t.id})">复核</button>
+                                </c:if>
+                                <c:if test="${t.status != 'SUBMITTED'}">
+                                    <span class="text-muted">-</span>
                                 </c:if>
                             </td>
                         </tr>
                     </c:forEach>
-                    <c:if test="${empty pageResult.data}">
-                        <tr><td colspan="7" class="text-center text-muted">暂无数据</td></tr>
-                    </c:if>
+                    <c:if test="${empty pageResult.data}"><tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📝</div><div class="empty-state-title">暂无整改任务</div><div class="empty-state-desc">还没有任何整改任务记录</div></div></td></tr></c:if>
                 </tbody>
             </table>
 
             <c:if test="${pageResult.totalPages > 1}">
                 <div class="pagination">
-                    <c:if test="${pageResult.page > 1}"><a href="?page=${pageResult.page - 1}&status=${status}">上一页</a></c:if>
+                    <c:if test="${pageResult.page > 1}"><a href="?page=${pageResult.page - 1}&status=${param.status}">上一页</a></c:if>
                     <span class="active">${pageResult.page} / ${pageResult.totalPages}</span>
-                    <c:if test="${pageResult.page < pageResult.totalPages}"><a href="?page=${pageResult.page + 1}&status=${status}">下一页</a></c:if>
+                    <c:if test="${pageResult.page < pageResult.totalPages}"><a href="?page=${pageResult.page + 1}&status=${param.status}">下一页</a></c:if>
                 </div>
             </c:if>
         </div>
@@ -97,37 +98,12 @@
     </div>
 
 <script>
-var contextPath = '${pageContext.request.contextPath}';
-
-function showReviewModal(taskId) {
-    document.getElementById('reviewTaskId').value = taskId;
-    document.getElementById('reviewResult').value = 'APPROVED';
-    document.getElementById('reviewComment').value = '';
-    document.getElementById('reviewModal').classList.add('show');
-}
-
-function closeReviewModal() {
-    document.getElementById('reviewModal').classList.remove('show');
-}
-
-function submitReview() {
-    var taskId = document.getElementById('reviewTaskId').value;
-    var result = document.getElementById('reviewResult').value;
-    var comment = document.getElementById('reviewComment').value;
-    var params = 'id=' + taskId + '&reviewResult=' + result + '&reviewComment=' + encodeURIComponent(comment);
-    fetch(contextPath + '/admin/rectification/review', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: params
-    }).then(r => r.json()).then(data => {
-        if (data.code === 200) {
-            closeReviewModal();
-            location.reload();
-        } else {
-            alert(data.message || '操作失败');
-        }
-    }).catch(err => { alert('操作失败'); });
-}
+window._pageConfig = {
+    contextPath: '${pageContext.request.contextPath}',
+    csrfToken: '${sessionScope._csrfToken}'
+};
 </script>
+<script src="${pageContext.request.contextPath}/js/common.js"></script>
+<script src="${pageContext.request.contextPath}/js/rectification-list.js"></script>
 </body>
 </html>
